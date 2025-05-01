@@ -17,13 +17,26 @@ const canvas_1 = __importDefault(require("canvas"));
 const constants_1 = require("./constants");
 const text_1 = require("./text");
 const util_1 = require("./util");
+/**
+ * Generates a canvas containing a bar graph from the provided data entries in the order provided.
+ * @param entries Data representing one row of the graph (with string name, number value, and optional icon)
+ * @param options.showNames Whether to show name labels for each row (defaults to true)
+ * @param options.showIcons Whether to show icons for each row (defaults to true)
+ * @param options.title Title to render above the graph (defaults to none)
+ * @param options.subtitle Subtitle to render below the title (defaults to none)
+ * @param options.rowHeight Height of each bar, including padding (defaults to 40px)
+ * @param options.width Width of the entire resulting graph (defaults to 480)
+ * @param options.palette Palette to use when drawing the graph (defaults to default graph palette)
+ * @returns New canvas containing the rendered bar graph
+ */
 function createBarGraph(entries, options) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
         const ROW_HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.rowHeight) !== null && _a !== void 0 ? _a : 40;
         const WIDTH = (_b = options === null || options === void 0 ? void 0 : options.width) !== null && _b !== void 0 ? _b : 480;
         const SHOW_NAMES = (_c = options === null || options === void 0 ? void 0 : options.showNames) !== null && _c !== void 0 ? _c : true;
-        const PALETTE = (_d = options === null || options === void 0 ? void 0 : options.palette) !== null && _d !== void 0 ? _d : constants_1.DEFAULT_GRAPH_PALETTE;
+        const SHOW_ICONS = (_d = options === null || options === void 0 ? void 0 : options.showIcons) !== null && _d !== void 0 ? _d : true;
+        const PALETTE = (_e = options === null || options === void 0 ? void 0 : options.palette) !== null && _e !== void 0 ? _e : constants_1.DEFAULT_GRAPH_PALETTE;
         // Margin between elements and around the edge of the canvas
         const MARGIN = 8;
         // Padding within boxes
@@ -41,14 +54,21 @@ function createBarGraph(entries, options) {
         for (const entry of entries) {
             // TODO: Use image loader with cache
             let image = undefined;
-            try {
-                image = yield canvas_1.default.loadImage(entry.imageUrl);
-            }
-            catch (err) {
-                // TODO: Use broken image
+            if (entry.icon) {
+                if (typeof entry.icon === 'string') {
+                    try {
+                        image = yield canvas_1.default.loadImage(entry.icon);
+                    }
+                    catch (err) {
+                        // TODO: Use broken image
+                    }
+                }
+                else {
+                    image = entry.icon;
+                }
             }
             let baseX = MARGIN;
-            // Write the name to the left of the image
+            // Write the name to the left of the icon
             if (SHOW_NAMES) {
                 context.fillStyle = PALETTE.padding;
                 context.fillRect(baseX, baseY, ROW_HEIGHT * 2, ROW_HEIGHT);
@@ -56,14 +76,16 @@ function createBarGraph(entries, options) {
                 context.fillText(entry.name, baseX + PADDING, baseY + 0.75 * ROW_HEIGHT, (ROW_HEIGHT - PADDING) * 2);
                 baseX += ROW_HEIGHT * 2 + MARGIN;
             }
-            // Draw the image
-            context.fillStyle = PALETTE.padding;
-            context.fillRect(baseX, baseY, ROW_HEIGHT, ROW_HEIGHT);
-            // TODO: Once using image loader, image should always be defined
-            if (image) {
-                context.drawImage(image, baseX + PADDING, baseY + PADDING, ROW_HEIGHT - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
+            // Draw the icon
+            if (SHOW_ICONS) {
+                context.fillStyle = PALETTE.padding;
+                context.fillRect(baseX, baseY, ROW_HEIGHT, ROW_HEIGHT);
+                // TODO: Once using image loader, image should always be defined
+                if (image) {
+                    context.drawImage(image, baseX + PADDING, baseY + PADDING, ROW_HEIGHT - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
+                }
+                baseX += ROW_HEIGHT + MARGIN;
             }
-            baseX += ROW_HEIGHT + MARGIN;
             // Draw the bar
             const MAX_BAR_WIDTH = WIDTH - baseX - MARGIN;
             const barWidth = Math.floor(MAX_BAR_WIDTH * entry.value / maxEntryValue);
@@ -72,6 +94,12 @@ function createBarGraph(entries, options) {
             if (barWidth > PADDING * 2) {
                 context.fillStyle = PALETTE.highlight;
                 context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
+            }
+            // If an arrow is specified, draw accordingly
+            // TODO: This feature sucks and should be better
+            if (entry.arrow) {
+                context.fillStyle = entry.arrow === 'up' ? 'darkgreen' : 'darkred';
+                context.fillText(entry.arrow === 'up' ? '⬆' : '⬇', baseX + 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
             }
             // Write the number value
             const valueText = `${entry.value}`;
@@ -91,11 +119,11 @@ function createBarGraph(entries, options) {
         const canvases = [];
         // If it has a title, add it
         if (options === null || options === void 0 ? void 0 : options.title) {
-            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.title, WIDTH, ROW_HEIGHT, { align: 'center', style: PALETTE.text, margin: MARGIN }));
+            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.title, { width: WIDTH, height: ROW_HEIGHT, align: 'center', style: PALETTE.text, margin: MARGIN }));
         }
         // If it has a subtitle, add it
         if (options === null || options === void 0 ? void 0 : options.subtitle) {
-            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.subtitle, WIDTH, Math.round(ROW_HEIGHT * 0.66), { align: 'center', style: PALETTE.text, margin: MARGIN }));
+            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.subtitle, { width: WIDTH, height: Math.round(ROW_HEIGHT * 0.66), align: 'center', style: PALETTE.text, margin: MARGIN }));
         }
         // Add the actual graph
         canvases.push(c);
