@@ -12,8 +12,14 @@ const canvas_1 = require("canvas");
  */
 function resize(image, options) {
     var _a, _b;
-    if (!(options === null || options === void 0 ? void 0 : options.width) && !(options === null || options === void 0 ? void 0 : options.height)) {
+    if ((options === null || options === void 0 ? void 0 : options.width) === undefined && (options === null || options === void 0 ? void 0 : options.height) === undefined) {
         throw new Error('Width and/or height must be specified when resizing');
+    }
+    if (options.width !== undefined && options.width <= 0) {
+        throw new Error(`Expected positive width option but got ${options.width}`);
+    }
+    if (options.height !== undefined && options.height <= 0) {
+        throw new Error(`Expected positive height option but got ${options.width}`);
     }
     // We know that if one of these is undefined, the other must be defined
     const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : ((options === null || options === void 0 ? void 0 : options.height) * image.width / image.height);

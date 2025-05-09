@@ -41,6 +41,9 @@ function getTextLabel(text, options) {
     const FONT = (_b = options === null || options === void 0 ? void 0 : options.font) !== null && _b !== void 0 ? _b : `${HEIGHT * 0.6}px sans-serif`;
     const WIDTH = (_c = options === null || options === void 0 ? void 0 : options.width) !== null && _c !== void 0 ? _c : getTextWidth(text, FONT);
     const ALIGN = (_d = options === null || options === void 0 ? void 0 : options.align) !== null && _d !== void 0 ? _d : 'center';
+    if (!text) {
+        throw new Error('Cannot create a text label with no text');
+    }
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const context = canvas.getContext('2d');
     context.font = FONT;
@@ -134,7 +137,8 @@ function getTextGrid(cells, options) {
         const canvases = [];
         for (let r = 0; r < rows; r++) {
             const cell = cells[r][c];
-            canvases.push(getTextLabel(cell.text, { style: cell.style, font: cell.font, height: options === null || options === void 0 ? void 0 : options.rowHeight }));
+            // Avoid creating empty text labels by replacing empty cells with whitespace
+            canvases.push(getTextLabel(cell.text || ' ', { style: cell.style, font: cell.font, height: options === null || options === void 0 ? void 0 : options.rowHeight }));
         }
         columns.push((0, util_1.joinCanvasesVertical)(canvases, { align: 'left' }));
     }

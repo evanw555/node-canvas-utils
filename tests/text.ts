@@ -1,7 +1,8 @@
 import fs from 'fs';
 import { expect } from 'chai';
 import { getTextBox, getTextGrid, getTextLabel } from '../src/text';
-import { fillBackground } from '../src/util';
+import { fillBackground, resize } from '../src/util';
+import { Canvas } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
@@ -30,7 +31,8 @@ describe('Canvas Text Util tests', () => {
             cells.push([]);
             for (let c = 0; c < 5; c++) {
                 cells[r][c] = {
-                    text: lorem.split(' ')[Math.floor(Math.random() * 100)],
+                    // Random chance of no text to ensure it can handle cells with empty text
+                    text: (Math.random() < 0.1) ? '' : lorem.split(' ')[Math.floor(Math.random() * 100)],
                     style: (r + c) % 3 === 0 ? 'green' : 'white',
                     font: (c === 0 ? '18px monospace' : (r % 2 === 0 ? 'italic bold 12px serif' : undefined))
                 };
