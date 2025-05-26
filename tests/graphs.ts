@@ -6,7 +6,7 @@ import { Canvas } from 'canvas';
 import { GraphPalette } from '../src/types';
 import { getTextLabel } from '../src/text';
 
-describe('Canvas Graph Util tests', () => {
+describe('Graph Util tests', () => {
     it('generates bar graphs', async () => {
         const otherPalette: GraphPalette = {
             background: 'black',

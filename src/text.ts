@@ -77,6 +77,22 @@ export function getTextLabel(text: string, options?: { width?: number, height?: 
 }
 
 /**
+ * Generates a canvas containing the specified text displayed vertically (top-to-bottom) with optional parameters.
+ * The options are the same as in {@link getTextLabel}, and have the sam effect.
+ */
+export function getVerticalTextLabel(text: string, options?: { width?: number, height?: number, align?: 'center' | 'left' | 'right', font?: string, style?: string, alpha?: number, margin?: number }): Canvas {
+    if (!text) {
+        throw new Error('Cannot create a vertical text label with no text');
+    }
+
+    const characters = text.trim().split('');
+
+    const canvases = characters.map(c => getTextLabel(c, options));
+
+    return joinCanvasesVertical(canvases, { align: options?.align });
+}
+
+/**
  * Generates a canvas containing the specified text automatically separated into multiple lines to match the desired resulting text box width.
  * Text will be justified using the horizontal alignment option, and any word too large to be printed on one single line will be stretched to fit.
  * The background of the text box will be transparent.

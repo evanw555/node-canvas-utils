@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTextGrid = exports.getTextBox = exports.getTextLabel = exports.getTextWidth = void 0;
+exports.getTextGrid = exports.getTextBox = exports.getVerticalTextLabel = exports.getTextLabel = exports.getTextWidth = void 0;
 const canvas_1 = require("canvas");
 const util_1 = require("./util");
 // Dummy canvas to be reused when measuring text width (creating a new one each time may be costly)
@@ -74,6 +74,19 @@ function getTextLabel(text, options) {
     return canvas;
 }
 exports.getTextLabel = getTextLabel;
+/**
+ * Generates a canvas containing the specified text displayed vertically (top-to-bottom) with optional parameters.
+ * The options are the same as in {@link getTextLabel}, and have the sam effect.
+ */
+function getVerticalTextLabel(text, options) {
+    if (!text) {
+        throw new Error('Cannot create a vertical text label with no text');
+    }
+    const characters = text.trim().split('');
+    const canvases = characters.map(c => getTextLabel(c, options));
+    return (0, util_1.joinCanvasesVertical)(canvases, { align: options === null || options === void 0 ? void 0 : options.align });
+}
+exports.getVerticalTextLabel = getVerticalTextLabel;
 /**
  * Generates a canvas containing the specified text automatically separated into multiple lines to match the desired resulting text box width.
  * Text will be justified using the horizontal alignment option, and any word too large to be printed on one single line will be stretched to fit.

@@ -16,6 +16,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./constants"), exports);
+__exportStar(require("./games"), exports);
 __exportStar(require("./graphs"), exports);
 __exportStar(require("./text"), exports);
 __exportStar(require("./types"), exports);
