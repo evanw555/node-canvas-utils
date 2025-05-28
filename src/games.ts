@@ -11,7 +11,7 @@ export function createWheelOfFortune(tiles: { content: number | string | Image, 
         const tile = tiles[i];
         const tileStyle = tile.fillStyle ?? 'red';
         const textStyle = tile.textStyle ?? 'white';
-        const tileImage = createWheelOfFortuneTile(tile.content, { tileStyle, textStyle });
+        const tileImage = createWheelOfFortuneTile(tile.content, { n: N, tileStyle, textStyle });
         const expanded = createCanvas(2 * R, 2 * R);
         const c = expanded.getContext('2d');
         c.drawImage(tileImage, (expanded.width - tileImage.width) / 2, 0);
@@ -22,16 +22,15 @@ export function createWheelOfFortune(tiles: { content: number | string | Image, 
 }
 
 // TODO: Clean up and document
-export function createWheelOfFortuneTile(content: number | string | Image, options?: { tileStyle?: string, textStyle?: string }): Canvas {
-    const R = 300;
-    const N = 24;
+export function createWheelOfFortuneTile(content: number | string | Image, options?: { r?: number, n?: number, tileStyle?: string, textStyle?: string }): Canvas {
+    const R = options?.r ?? 300;
+    const N = options?.n ?? 24;
 
     const theta = 2 * Math.PI / N;
     const phi = (Math.PI - theta) / 2;
     const midphi = (Math.PI / 2) - (theta / 4);
 
     const x = R * Math.cos(phi);
-    const y = R * Math.sin(phi);
 
     const WIDTH = x * 2;
     const HEIGHT = R;
@@ -39,20 +38,24 @@ export function createWheelOfFortuneTile(content: number | string | Image, optio
     const canvas = createCanvas(WIDTH, HEIGHT);
     const c = canvas.getContext('2d');
 
+    const unit = Math.min(WIDTH * 0.55, HEIGHT * 0.3);
+    const lineWidth = Math.round(unit / 12);
+    const ER = R - (lineWidth / 2);
+
     c.strokeStyle = 'black';
-    c.lineWidth = 2;
+    c.lineWidth = lineWidth;
     c.fillStyle = options?.tileStyle ?? 'red';
     c.beginPath();
     // Bottom center
     c.moveTo(WIDTH / 2, HEIGHT);
     // Top left
-    c.lineTo(0, HEIGHT - y);
+    c.lineTo(0, HEIGHT - ER * Math.sin(phi));
     // Move along the crown
-    c.lineTo((WIDTH / 2) - R * Math.cos(midphi), HEIGHT - R * Math.sin(midphi));
-    c.lineTo(WIDTH / 2, 0);
-    c.lineTo((WIDTH / 2) + R * Math.cos(midphi), HEIGHT - R * Math.sin(midphi));
+    c.lineTo((WIDTH / 2) - ER * Math.cos(midphi), HEIGHT - ER * Math.sin(midphi));
+    c.lineTo(WIDTH / 2, R - ER);
+    c.lineTo((WIDTH / 2) + ER * Math.cos(midphi), HEIGHT - ER * Math.sin(midphi));
     // Top right
-    c.lineTo(WIDTH, HEIGHT - y);
+    c.lineTo(WIDTH, HEIGHT - ER * Math.sin(phi));
     // Back to bottom center
     c.lineTo(WIDTH / 2, HEIGHT);
     c.fill();
@@ -61,20 +64,22 @@ export function createWheelOfFortuneTile(content: number | string | Image, optio
     // If it's a number, draw as a cent amount
     if (typeof content === 'number') {
         // TODO: Can we always assume cents? Should we add an option for dollars?
-        const cent = getTextLabel('¢', { height: WIDTH / 2, align: 'center', font: `${WIDTH / 2}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
-        const text = getVerticalTextLabel(content.toString(), { height: WIDTH * 0.6, align: 'center', font: `${WIDTH * 0.75}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
-        const joined = withDropShadow(joinCanvasesVertical([cent, text], { align: 'center' }), { expandCanvas: true, distance: WIDTH / 20 });
+        const cent = getTextLabel('¢', { height: unit * 0.6, align: 'center', font: `${unit * 0.6}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
+        const text = getVerticalTextLabel(content.toString(), { height: unit, align: 'center', font: `${unit * 1.25}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
+        const joined = withDropShadow(joinCanvasesVertical([cent, text], { align: 'center' }), { expandCanvas: true, distance: unit / 15 });
         c.drawImage(joined, (WIDTH - joined.width) / 2, 0);
     }
     // If it's a string, write as a label
     if (typeof content === 'string') {
-        const text = getVerticalTextLabel(content.toString(), { height: WIDTH * 0.45, align: 'center', font: `${WIDTH * 0.5}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
-        const label = withDropShadow(text, { expandCanvas: true, distance: WIDTH / 20 });
-        c.drawImage(label, (WIDTH - label.width) / 2, WIDTH / 20, label.width, Math.min(label.height, canvas.height * 0.6));
+        const text = getVerticalTextLabel(content.toString(), { height: unit * 0.9, align: 'center', font: `${unit}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
+        const label = withDropShadow(text, { expandCanvas: true, distance: unit / 15 });
+        c.drawImage(label, (WIDTH - label.width) / 2, unit / 10, label.width, Math.min(label.height, canvas.height * 0.6));
     }
     // Else, assume it's a custom icon
     else if (content instanceof Image) {
-        c.drawImage(content, WIDTH / 8, WIDTH / 16, WIDTH * 0.75, WIDTH * 0.75);
+        const ew = Math.min(WIDTH, HEIGHT / 2);
+        const iconWidth = ew * 0.75;
+        c.drawImage(content, (WIDTH - iconWidth) / 2, ew / 8, iconWidth, iconWidth);
     }
 
 

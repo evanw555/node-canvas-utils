@@ -5,6 +5,8 @@ export declare function createWheelOfFortune(tiles: {
     textStyle?: string;
 }[]): Canvas;
 export declare function createWheelOfFortuneTile(content: number | string | Image, options?: {
+    r?: number;
+    n?: number;
     tileStyle?: string;
     textStyle?: string;
 }): Canvas;
