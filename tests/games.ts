@@ -52,10 +52,11 @@ describe('Games Util tests', () => {
         for (let j = 4; j < 30; j += 3) {
             const tiles: any[] = [];
             for (let i = 0; i < j; i++) {
+                const fillStyle = `hsl(${Math.floor((((i * 7)) % 20) * 360 / 20)}, 90%, 40%)`;
                 if (Math.random() < 0.75) {
                     tiles.push({
                         content: Math.ceil(Math.random() * 10),
-                        fillStyle: `hsl(${Math.round(Math.random() * 360)}, 50%, 50%)`
+                        fillStyle
                     });
                 } else if (Math.random() < 0.5) {
                     if (Math.random() < 0.5) {
@@ -89,7 +90,8 @@ describe('Games Util tests', () => {
                     });
                 } else {
                     tiles.push({
-                        content: icon
+                        content: icon,
+                        fillStyle
                     });
                 }
             }

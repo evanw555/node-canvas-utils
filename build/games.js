@@ -95,7 +95,8 @@ function createWheelOfFortuneTile(content, options) {
     else if (content instanceof canvas_1.Image) {
         const ew = Math.min(WIDTH, HEIGHT / 2);
         const iconWidth = ew * 0.75;
-        c.drawImage(content, (WIDTH - iconWidth) / 2, ew / 8, iconWidth, iconWidth);
+        const icon = (0, util_1.withDropShadow)((0, util_1.resize)(content, { width: ew }), { expandCanvas: true, distance: unit / 15 });
+        c.drawImage(icon, (WIDTH - iconWidth) / 2, ew / 8, iconWidth, iconWidth);
     }
     return canvas;
 }

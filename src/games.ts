@@ -1,6 +1,6 @@
 import { Canvas, createCanvas, Image, registerFont } from "canvas";
 import { getTextLabel, getVerticalTextLabel } from "./text";
-import { crop, getRotated, joinCanvasesVertical, superimpose, withDropShadow } from "./util";
+import { crop, getRotated, joinCanvasesVertical, resize, superimpose, withDropShadow } from "./util";
 
 interface WheelOfFortuneTileRenderData {
     content: number | string | Image | WheelOfFortuneTileRenderData[],
@@ -105,7 +105,8 @@ export function createWheelOfFortuneTile(content: number | string | Image | Whee
     else if (content instanceof Image) {
         const ew = Math.min(WIDTH, HEIGHT / 2);
         const iconWidth = ew * 0.75;
-        c.drawImage(content, (WIDTH - iconWidth) / 2, ew / 8, iconWidth, iconWidth);
+        const icon = withDropShadow(resize(content, { width: ew }), { expandCanvas: true, distance: unit / 15 })
+        c.drawImage(icon, (WIDTH - iconWidth) / 2, ew / 8, iconWidth, iconWidth);
     }
 
 
