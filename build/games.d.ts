@@ -1,13 +1,15 @@
 import { Canvas, Image } from "canvas";
-export declare function createWheelOfFortune(tiles: {
-    content: number | string | Image;
+interface WheelOfFortuneTileRenderData {
+    content: number | string | Image | WheelOfFortuneTileRenderData[];
     fillStyle?: string;
     textStyle?: string;
-}[]): Canvas;
-export declare function createWheelOfFortuneTile(content: number | string | Image, options?: {
+}
+export declare function createWheelOfFortune(tiles: WheelOfFortuneTileRenderData[]): Canvas;
+export declare function createWheelOfFortuneTile(content: number | string | Image | WheelOfFortuneTileRenderData[], options?: {
     r?: number;
     n?: number;
     tileStyle?: string;
     textStyle?: string;
 }): Canvas;
+export {};
 //# sourceMappingURL=games.d.ts.map

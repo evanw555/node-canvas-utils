@@ -35,6 +35,25 @@ function createWheelOfFortuneTile(content, options) {
     const x = R * Math.cos(phi);
     const WIDTH = x * 2;
     const HEIGHT = R;
+    // First thing's first, if it's a call to make a tile recursively from subtiles
+    if (content.constructor === Array) {
+        const subtileImages = [];
+        const M = content.length;
+        for (let i = 0; i < M; i++) {
+            const subtile = content[i];
+            const subtileImage = createWheelOfFortuneTile(subtile.content, { r: R, n: N * M, tileStyle: subtile.fillStyle, textStyle: subtile.textStyle });
+            // Rotate the subtile to the appropriate relative angle
+            const expanded = (0, canvas_1.createCanvas)(2 * R, 2 * R);
+            const c = expanded.getContext('2d');
+            c.drawImage(subtileImage, (expanded.width - subtileImage.width) / 2, 0);
+            const rot = theta * (M - 1 - 2 * i) / (2 * M);
+            const rotated = (0, util_1.getRotated)(expanded, rot);
+            subtileImages.push(rotated);
+        }
+        // Superimpose all the subtiles together, then crop to just the tile
+        const combined = (0, util_1.superimpose)(subtileImages);
+        return (0, util_1.crop)(combined, { width: WIDTH, height: HEIGHT, vertical: 'top', horizontal: 'center' });
+    }
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const c = canvas.getContext('2d');
     const unit = Math.min(WIDTH * 0.55, HEIGHT * 0.3);

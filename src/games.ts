@@ -1,9 +1,15 @@
 import { Canvas, createCanvas, Image, registerFont } from "canvas";
 import { getTextLabel, getVerticalTextLabel } from "./text";
-import { getRotated, joinCanvasesVertical, superimpose, withDropShadow } from "./util";
+import { crop, getRotated, joinCanvasesVertical, superimpose, withDropShadow } from "./util";
+
+interface WheelOfFortuneTileRenderData {
+    content: number | string | Image | WheelOfFortuneTileRenderData[],
+    fillStyle?: string,
+    textStyle?: string
+}
 
 // TODO: Clean up and document
-export function createWheelOfFortune(tiles: { content: number | string | Image, fillStyle?: string, textStyle?: string }[]): Canvas {
+export function createWheelOfFortune(tiles: WheelOfFortuneTileRenderData[]): Canvas {
     const N = tiles.length;
     const R = 300;
     const canvases: Canvas[] = [];
@@ -22,7 +28,7 @@ export function createWheelOfFortune(tiles: { content: number | string | Image, 
 }
 
 // TODO: Clean up and document
-export function createWheelOfFortuneTile(content: number | string | Image, options?: { r?: number, n?: number, tileStyle?: string, textStyle?: string }): Canvas {
+export function createWheelOfFortuneTile(content: number | string | Image | WheelOfFortuneTileRenderData[], options?: { r?: number, n?: number, tileStyle?: string, textStyle?: string }): Canvas {
     const R = options?.r ?? 300;
     const N = options?.n ?? 24;
 
@@ -34,6 +40,26 @@ export function createWheelOfFortuneTile(content: number | string | Image, optio
 
     const WIDTH = x * 2;
     const HEIGHT = R;
+    
+    // First thing's first, if it's a call to make a tile recursively from subtiles
+    if (content.constructor === Array) {
+        const subtileImages: Canvas[] = [];
+        const M = content.length;
+        for (let i = 0; i < M; i++) {
+            const subtile = content[i];
+            const subtileImage = createWheelOfFortuneTile(subtile.content, { r: R, n: N * M, tileStyle: subtile.fillStyle, textStyle: subtile.textStyle });
+            // Rotate the subtile to the appropriate relative angle
+            const expanded = createCanvas(2 * R, 2 * R);
+            const c = expanded.getContext('2d');
+            c.drawImage(subtileImage, (expanded.width - subtileImage.width) / 2, 0);
+            const rot = theta * (M - 1 - 2 * i) / (2 * M);
+            const rotated = getRotated(expanded, rot);
+            subtileImages.push(rotated);
+        }
+        // Superimpose all the subtiles together, then crop to just the tile
+        const combined = superimpose(subtileImages);
+        return crop(combined, { width: WIDTH, height: HEIGHT, vertical: 'top', horizontal: 'center' });
+    }
 
     const canvas = createCanvas(WIDTH, HEIGHT);
     const c = canvas.getContext('2d');

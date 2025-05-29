@@ -30,6 +30,18 @@ describe('Games Util tests', () => {
         }
         rows.push(joinCanvasesHorizontal(tiles3));
 
+        // For the final test, test recursive subtile creation
+        const tiles4: Canvas[] = [];
+        for (let i = 3; i < 40; i++) {
+            const tile = createWheelOfFortuneTile([
+                { content: 'BANKRUPT', fillStyle: 'black', textStyle: 'white' },
+                { content: 100, fillStyle: 'green', textStyle: 'white' },
+                { content: 'BANKRUPT', fillStyle: 'black', textStyle: 'white' }
+            ], { n: i, tileStyle: 'blue', textStyle: 'white' });
+            tiles4.push(tile);
+        }
+        rows.push(joinCanvasesHorizontal(tiles4));
+
         fs.writeFileSync('/tmp/node-canvas-utils/createWheelOfFortuneTile.png', joinCanvasesVertical(rows).toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/createWheelOfFortuneTile.png')).is.true;
     });
@@ -38,9 +50,9 @@ describe('Games Util tests', () => {
         const icon = await loadImage('https://imgs.search.brave.com/ELTguMyjSd6zKNOfIoADDbMwDlTUjSuEbyozdFdSqUc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWdz/LnNlYXJjaC5icmF2/ZS5jb20vai1NZWpL/dlgtd29jenM3LWVp/NV80anA2aFlpaVhC/ZURPWVl1Y0N5dnM3/ay9yczpmaXQ6NTAw/OjA6MDowL2c6Y2Uv/YUhSMGNITTZMeTlq/Wkc0dS9jR2w0WVdK/aGVTNWpiMjB2L2NH/aHZkRzh2TWpBeE5p/OHgvTUM4d09DOHhP/Qzh6TkM5ai9ZVzFs/Y21FdE1UY3lOREk0/L05sODJOREF1Y0c1/bg');
         const wheels: Canvas[] = [];
         for (let j = 4; j < 30; j += 3) {
-            const tiles: { content: number | string | Image, fillStyle?: string, textStyle?: string }[] = [];
+            const tiles: any[] = [];
             for (let i = 0; i < j; i++) {
-                if (Math.random() < 0.8) {
+                if (Math.random() < 0.75) {
                     tiles.push({
                         content: Math.ceil(Math.random() * 10),
                         fillStyle: `hsl(${Math.round(Math.random() * 360)}, 50%, 50%)`
@@ -59,6 +71,22 @@ describe('Games Util tests', () => {
                         textStyle: 'black'
                     });
                     }
+                } else if (Math.random() < 0.5) {
+                    tiles.push({
+                        content: [{
+                            content: 'BANKRUPT',
+                            fillStyle: 'black',
+                            textStyle: 'white'
+                        }, {
+                            content: 500,
+                            fillStyle: 'green',
+                            textStyle: 'white'
+                        }, {
+                            content: 'BANKRUPT',
+                            fillStyle: 'black',
+                            textStyle: 'white'
+                        }]
+                    });
                 } else {
                     tiles.push({
                         content: icon
