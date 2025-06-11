@@ -83,7 +83,10 @@ export declare function withDropShadow(image: Canvas | Image, options?: {
  * @param canvases Source images
  * @returns New canvas with all source images superimposed onto one another
  */
-export declare function superimpose(canvases: (Canvas | Image)[]): Canvas;
+export declare function superimpose(canvases: (Canvas | Image)[], options?: {
+    horizontalAlign?: 'center' | 'left' | 'right';
+    verticalAlign?: 'center' | 'top' | 'bottom';
+}): Canvas;
 /**
  * Given a source image, returns a new canvas containing the source image with its hue property updated.
  * @param image Source image

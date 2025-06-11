@@ -292,10 +292,12 @@ export function withDropShadow(image: Canvas | Image, options?: { expandCanvas?:
  * @param canvases Source images
  * @returns New canvas with all source images superimposed onto one another
  */
-export function superimpose(canvases: (Canvas | Image)[]): Canvas {
+export function superimpose(canvases: (Canvas | Image)[], options?: { horizontalAlign?: 'center' | 'left' | 'right', verticalAlign?: 'center' | 'top' | 'bottom' }): Canvas {
     if (canvases.length === 0) {
         throw new Error('Cannot superimpose an empty list of source images');
     }
+    const HORIZONTAL_ALIGN = options?.horizontalAlign ?? 'center';
+    const VERTICAL_ALIGN = options?.verticalAlign ?? 'center';
     const WIDTH = Math.max(...canvases.map(c => c.width));
     const HEIGHT = Math.max(...canvases.map(c => c.height));
     const canvas = createCanvas(WIDTH, HEIGHT);
@@ -303,7 +305,26 @@ export function superimpose(canvases: (Canvas | Image)[]): Canvas {
 
     // Draw each canvas in order centered on the canvas
     for (const c of canvases) {
-        context.drawImage(c, Math.round((WIDTH - c.width) / 2), Math.round((HEIGHT - c.height) / 2));
+        // Determine horizontal position
+        let x: number;
+        if (HORIZONTAL_ALIGN === 'center') {
+            x = Math.round((WIDTH - c.width) / 2);
+        } else if (HORIZONTAL_ALIGN === 'right') {
+            x = WIDTH - c.width;
+        } else {
+            x = 0;
+        }
+        // Determine vertical position
+        let y: number;
+        if (VERTICAL_ALIGN === 'center') {
+            y = Math.round((HEIGHT - c.height) / 2);
+        } else if (VERTICAL_ALIGN === 'bottom') {
+            y = HEIGHT - c.height;
+        } else {
+            y = 0;
+        }
+        // Draw the image
+        context.drawImage(c, x, y);
     }
 
     return canvas;

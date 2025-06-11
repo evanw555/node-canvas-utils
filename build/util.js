@@ -266,17 +266,43 @@ exports.withDropShadow = withDropShadow;
  * @param canvases Source images
  * @returns New canvas with all source images superimposed onto one another
  */
-function superimpose(canvases) {
+function superimpose(canvases, options) {
+    var _a, _b;
     if (canvases.length === 0) {
         throw new Error('Cannot superimpose an empty list of source images');
     }
+    const HORIZONTAL_ALIGN = (_a = options === null || options === void 0 ? void 0 : options.horizontalAlign) !== null && _a !== void 0 ? _a : 'center';
+    const VERTICAL_ALIGN = (_b = options === null || options === void 0 ? void 0 : options.verticalAlign) !== null && _b !== void 0 ? _b : 'center';
     const WIDTH = Math.max(...canvases.map(c => c.width));
     const HEIGHT = Math.max(...canvases.map(c => c.height));
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const context = canvas.getContext('2d');
     // Draw each canvas in order centered on the canvas
     for (const c of canvases) {
-        context.drawImage(c, Math.round((WIDTH - c.width) / 2), Math.round((HEIGHT - c.height) / 2));
+        // Determine horizontal position
+        let x;
+        if (HORIZONTAL_ALIGN === 'center') {
+            x = Math.round((WIDTH - c.width) / 2);
+        }
+        else if (HORIZONTAL_ALIGN === 'right') {
+            x = WIDTH - c.width;
+        }
+        else {
+            x = 0;
+        }
+        // Determine vertical position
+        let y;
+        if (VERTICAL_ALIGN === 'center') {
+            y = Math.round((HEIGHT - c.height) / 2);
+        }
+        else if (VERTICAL_ALIGN === 'bottom') {
+            y = HEIGHT - c.height;
+        }
+        else {
+            y = 0;
+        }
+        // Draw the image
+        context.drawImage(c, x, y);
     }
     return canvas;
 }
