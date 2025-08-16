@@ -16,6 +16,7 @@ export declare function createBarGraph(entries: {
     name: string;
     value: number;
     icon?: string | Canvas | Image;
+    color?: string;
     arrow?: 'up' | 'down';
 }[], options?: {
     showNames?: boolean;

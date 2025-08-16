@@ -30,7 +30,7 @@ const util_1 = require("./util");
  * @returns New canvas containing the rendered bar graph
  */
 function createBarGraph(entries, options) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         const ROW_HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.rowHeight) !== null && _a !== void 0 ? _a : 40;
         const WIDTH = (_b = options === null || options === void 0 ? void 0 : options.width) !== null && _b !== void 0 ? _b : 480;
@@ -92,7 +92,8 @@ function createBarGraph(entries, options) {
             context.fillStyle = PALETTE.padding;
             context.fillRect(baseX, baseY, barWidth, ROW_HEIGHT);
             if (barWidth > PADDING * 2) {
-                context.fillStyle = PALETTE.highlight;
+                // Use the color override if it exists, else use the palette highlight color
+                context.fillStyle = (_f = entry.color) !== null && _f !== void 0 ? _f : PALETTE.highlight;
                 context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
             }
             // If an arrow is specified, draw accordingly

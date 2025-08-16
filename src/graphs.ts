@@ -16,7 +16,7 @@ import { fillBackground, joinCanvasesVertical } from './util';
  * @param options.palette Palette to use when drawing the graph (defaults to default graph palette)
  * @returns New canvas containing the rendered bar graph
  */
-export async function createBarGraph(entries: { name: string, value: number, icon?: string | Canvas | Image, arrow?: 'up' | 'down' }[], options?: { showNames?: boolean, showIcons?: boolean, title?: string, subtitle?: string, rowHeight?: number, width?: number, palette?: GraphPalette }): Promise<Canvas> {
+export async function createBarGraph(entries: { name: string, value: number, icon?: string | Canvas | Image, color?: string, arrow?: 'up' | 'down' }[], options?: { showNames?: boolean, showIcons?: boolean, title?: string, subtitle?: string, rowHeight?: number, width?: number, palette?: GraphPalette }): Promise<Canvas> {
     const ROW_HEIGHT = options?.rowHeight ?? 40;
     const WIDTH = options?.width ?? 480
     const SHOW_NAMES = options?.showNames ?? true;
@@ -81,7 +81,8 @@ export async function createBarGraph(entries: { name: string, value: number, ico
         context.fillStyle = PALETTE.padding;
         context.fillRect(baseX, baseY, barWidth, ROW_HEIGHT);
         if (barWidth > PADDING * 2) {
-            context.fillStyle = PALETTE.highlight;
+            // Use the color override if it exists, else use the palette highlight color
+            context.fillStyle = entry.color ?? PALETTE.highlight;
             context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
         }
         // If an arrow is specified, draw accordingly

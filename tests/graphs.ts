@@ -18,11 +18,13 @@ describe('Graph Util tests', () => {
         };
         const graphs: Canvas[] = [];
         for (let i = 0; i < 5; i++) {
+            const overrideColors = Math.random() < 0.4;
             const entries = ['One', 'Two', 'Three', 'Four', 'Five'].map(s => ({
                 name: s,
                 value: Math.floor(Math.random() * 20),
                 icon: Math.random() < 0.5 ? getTextLabel('#') : graphs[i - 1],
-                arrow: (Math.random() < 0.2 ? 'down' : (Math.random() < 0.4 ? 'up' : undefined)) as ('up' | 'down' | undefined)
+                arrow: (Math.random() < 0.2 ? 'down' : (Math.random() < 0.4 ? 'up' : undefined)) as ('up' | 'down' | undefined),
+                color: overrideColors ? (`rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`) : undefined
             }));
             const barGraph = await createBarGraph(entries, {
                 title: `Test Bar Graph ${i + 1}`,
