@@ -21,7 +21,7 @@ describe('Graph Util tests', () => {
             const overrideColors = Math.random() < 0.4;
             const entries = ['One', 'Two', 'Three', 'Four', 'Five'].map(s => ({
                 name: s,
-                value: Math.floor(Math.random() * 20),
+                value: Math.random() * 20,
                 icon: Math.random() < 0.5 ? getTextLabel('#') : graphs[i - 1],
                 arrow: (Math.random() < 0.2 ? 'down' : (Math.random() < 0.4 ? 'up' : undefined)) as ('up' | 'down' | undefined),
                 color: overrideColors ? (`rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`) : undefined
@@ -30,10 +30,11 @@ describe('Graph Util tests', () => {
                 title: `Test Bar Graph ${i + 1}`,
                 subtitle: Math.random() < 0.25 ? 'Here it is!' : undefined,
                 rowHeight: Math.random() < 0.5 ? (Math.floor(Math.random() * 50) + 10) : undefined,
-                width: Math.random() < 0.5 ? (Math.floor(Math.random() * 400) + 50) : undefined,
+                width: Math.random() < 0.5 ? (Math.floor(Math.random() * 400) + 150) : undefined,
                 showNames: Math.random() < 0.25 ? false : undefined,
                 showIcons: Math.random() < 0.25 ? false : undefined,
-                palette: Math.random() < 0.25 ? otherPalette : undefined
+                palette: Math.random() < 0.25 ? otherPalette : undefined,
+                decimalPrecision: Math.floor(Math.random() * 4)
             });
             graphs.push(barGraph);
         }

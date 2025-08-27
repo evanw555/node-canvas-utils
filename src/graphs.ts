@@ -14,14 +14,16 @@ import { fillBackground, joinCanvasesVertical } from './util';
  * @param options.rowHeight Height of each bar, including padding (defaults to 40px)
  * @param options.width Width of the entire resulting graph (defaults to 480)
  * @param options.palette Palette to use when drawing the graph (defaults to default graph palette)
+ * @param options.decimalPrecision Number of decimal places to show on row number values
  * @returns New canvas containing the rendered bar graph
  */
-export async function createBarGraph(entries: { name: string, value: number, icon?: string | Canvas | Image, color?: string, arrow?: 'up' | 'down' }[], options?: { showNames?: boolean, showIcons?: boolean, title?: string, subtitle?: string, rowHeight?: number, width?: number, palette?: GraphPalette }): Promise<Canvas> {
+export async function createBarGraph(entries: { name: string, value: number, icon?: string | Canvas | Image, color?: string, arrow?: 'up' | 'down' }[], options?: { showNames?: boolean, showIcons?: boolean, title?: string, subtitle?: string, rowHeight?: number, width?: number, palette?: GraphPalette, decimalPrecision?: number }): Promise<Canvas> {
     const ROW_HEIGHT = options?.rowHeight ?? 40;
     const WIDTH = options?.width ?? 480
     const SHOW_NAMES = options?.showNames ?? true;
     const SHOW_ICONS = options?.showIcons ?? true;
     const PALETTE = options?.palette ?? DEFAULT_GRAPH_PALETTE;
+    const DECIMAL_PRECISION = options?.decimalPrecision ?? 1;
 
     // Margin between elements and around the edge of the canvas
     const MARGIN = 8;
@@ -92,7 +94,7 @@ export async function createBarGraph(entries: { name: string, value: number, ico
             context.fillText(entry.arrow === 'up' ? '⬆' : '⬇', baseX + 2 * PADDING, baseY + 0.75 * ROW_HEIGHT)
         }
         // Write the number value
-        const valueText = `${entry.value}`;
+        const valueText = parseFloat(entry.value.toFixed(DECIMAL_PRECISION)).toString();
         const valueTextWidth = context.measureText(valueText).width;
         context.fillStyle = PALETTE.text;
         if (valueTextWidth + 4 * PADDING < barWidth) {

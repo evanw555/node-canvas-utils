@@ -27,16 +27,18 @@ const util_1 = require("./util");
  * @param options.rowHeight Height of each bar, including padding (defaults to 40px)
  * @param options.width Width of the entire resulting graph (defaults to 480)
  * @param options.palette Palette to use when drawing the graph (defaults to default graph palette)
+ * @param options.decimalPrecision Number of decimal places to show on row number values
  * @returns New canvas containing the rendered bar graph
  */
 function createBarGraph(entries, options) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     return __awaiter(this, void 0, void 0, function* () {
         const ROW_HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.rowHeight) !== null && _a !== void 0 ? _a : 40;
         const WIDTH = (_b = options === null || options === void 0 ? void 0 : options.width) !== null && _b !== void 0 ? _b : 480;
         const SHOW_NAMES = (_c = options === null || options === void 0 ? void 0 : options.showNames) !== null && _c !== void 0 ? _c : true;
         const SHOW_ICONS = (_d = options === null || options === void 0 ? void 0 : options.showIcons) !== null && _d !== void 0 ? _d : true;
         const PALETTE = (_e = options === null || options === void 0 ? void 0 : options.palette) !== null && _e !== void 0 ? _e : constants_1.DEFAULT_GRAPH_PALETTE;
+        const DECIMAL_PRECISION = (_f = options === null || options === void 0 ? void 0 : options.decimalPrecision) !== null && _f !== void 0 ? _f : 1;
         // Margin between elements and around the edge of the canvas
         const MARGIN = 8;
         // Padding within boxes
@@ -93,7 +95,7 @@ function createBarGraph(entries, options) {
             context.fillRect(baseX, baseY, barWidth, ROW_HEIGHT);
             if (barWidth > PADDING * 2) {
                 // Use the color override if it exists, else use the palette highlight color
-                context.fillStyle = (_f = entry.color) !== null && _f !== void 0 ? _f : PALETTE.highlight;
+                context.fillStyle = (_g = entry.color) !== null && _g !== void 0 ? _g : PALETTE.highlight;
                 context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
             }
             // If an arrow is specified, draw accordingly
@@ -103,7 +105,7 @@ function createBarGraph(entries, options) {
                 context.fillText(entry.arrow === 'up' ? '⬆' : '⬇', baseX + 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
             }
             // Write the number value
-            const valueText = `${entry.value}`;
+            const valueText = parseFloat(entry.value.toFixed(DECIMAL_PRECISION)).toString();
             const valueTextWidth = context.measureText(valueText).width;
             context.fillStyle = PALETTE.text;
             if (valueTextWidth + 4 * PADDING < barWidth) {

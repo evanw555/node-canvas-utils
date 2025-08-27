@@ -10,6 +10,7 @@ import { GraphPalette } from './types';
  * @param options.rowHeight Height of each bar, including padding (defaults to 40px)
  * @param options.width Width of the entire resulting graph (defaults to 480)
  * @param options.palette Palette to use when drawing the graph (defaults to default graph palette)
+ * @param options.decimalPrecision Number of decimal places to show on row number values
  * @returns New canvas containing the rendered bar graph
  */
 export declare function createBarGraph(entries: {
@@ -26,5 +27,6 @@ export declare function createBarGraph(entries: {
     rowHeight?: number;
     width?: number;
     palette?: GraphPalette;
+    decimalPrecision?: number;
 }): Promise<Canvas>;
 //# sourceMappingURL=graphs.d.ts.map
