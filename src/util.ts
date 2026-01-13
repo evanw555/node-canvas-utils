@@ -242,6 +242,29 @@ export function applyMask(image: Canvas | Image, mask: Canvas | Image): Canvas {
 }
 
 /**
+ * Given a style string and a mask image, return a new canvas including every part of the mask image
+ * recolored to match the color specified in the style string.
+ * @param style The style string (i.e. color)
+ * @param mask Mask image (or canvas)
+ * @returns The specified color in the shape of the mask image
+ */
+export function fillWithMask(style: string, mask: Canvas | Image): Canvas {
+    // First, create a canvas containing only the provided color
+    const canvas = createCanvas(mask.width, mask.height);
+    const context = canvas.getContext('2d');
+    context.fillStyle = style;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Then, apply the mask
+    context.save();
+    context.globalCompositeOperation = 'destination-in';
+    context.drawImage(mask, 0, 0, canvas.width, canvas.height);
+    context.restore();
+
+    return canvas;
+}
+
+/**
  * Given a source image, return a new canvas with a drop shadow added to all visible parts of the source image.
  * @param image Source image
  * @param options.expandCanvas If true, a margin will be added on all sides to ensure the drop shadow fits. Else, the dimensions will remain the same.
@@ -251,15 +274,36 @@ export function applyMask(image: Canvas | Image, mask: Canvas | Image): Canvas {
  * @returns New canvas including the source image with an added drop shadow
  */
 export function withDropShadow(image: Canvas | Image, options?: { expandCanvas?: boolean, alpha?: number, angle?: number, distance?: number }): Canvas {
+    // We can draw a drop shadow by basically drawing an outline with the lowest quality possible
+    return withOutline(image, {
+        expandCanvas: options?.expandCanvas ?? false,
+        style: `rgba(0,0,0,${options?.alpha ?? 0.5})`,
+        thickness: options?.distance ?? 3,
+        quality: 1,
+        initialAngle: options?.alpha ?? (Math.PI * 1.75)
+    });
+}
+
+/**
+ * Given a source image, return a new canvas with an outline added around all visible parts of the source image.
+ * @param image Source image
+ * @param options.expandCanvas If true, a margin will be added on all sides to ensure the outline fits. Else, the dimensions will remain the same.
+ * @param options.style The style (i.e. color) string of the outline (default half-transparent black)
+ * @param options.thickness The thickness (in pixels) of the outline (default 3)
+ * @param options.quality How many different angles to cover around the shape when drawing the outline (default 16 or 32 for larger images)
+ * @param options.initialAngle The angle (in radians) to start drawing outlines from (default 0)
+ * @returns New canvas including the source image with an added outline
+ */
+export function withOutline(image: Canvas | Image, options?: { expandCanvas?: boolean, style?: string, thickness?: number, quality?: number, initialAngle?: number }): Canvas {
+    // This function essentially applies a drop shadow many times to simulate an outline
     const expandCanvas = options?.expandCanvas ?? false;
-    const alpha = options?.alpha ?? 0.5;
-    const angle = options?.angle ?? Math.PI * 1.75;
-    const distance = options?.distance ?? 3;
+    const style = options?.style ?? 'rgba(0,0,0,0.5)';
+    const thickness = options?.thickness ?? 3;
+    // For the default quality, only raise it by default if the image is large enough
+    const quality = Math.max(1, options?.quality ?? (image.width >= 1000 ? 32 : 16));
+    const initialAngle = options?.initialAngle ?? 0;
 
-    const dx = distance * Math.cos(angle);
-    const dy = distance * -Math.sin(angle);
-
-    const expansion = expandCanvas ? distance : 0;
+    const expansion = expandCanvas ? thickness : 0;
 
     const width = image.width + 2 * expansion;
     const height = image.height + 2 * expansion;
@@ -268,15 +312,24 @@ export function withDropShadow(image: Canvas | Image, options?: { expandCanvas?:
     const context = canvas.getContext('2d');
     context.save();
 
-    // First, draw the offset source image as a mask for where the shadow will appear
-    const shadowX = dx + expansion;
-    const shadowY = dy + expansion;
-    context.drawImage(image, shadowX, shadowY);
+    // Use "source-out" to avoid writing to the same pixel multiple times (would affect alphas)
+    // TODO: Doesn't seem to be working as expected, so come back to this later
+    // context.globalCompositeOperation = 'source-out';
 
-    // Then, fill the shadow where it intersects with the mask
+    // First, draw the source image offset multiple times around the center to create the outline mask
+    for (let i = 0; i < quality; i++) {
+        const angle = initialAngle + (i / quality) * 2 * Math.PI;
+        const dx = thickness * Math.cos(angle);
+        const dy = thickness * -Math.sin(angle);
+
+        const shadowX = dx + expansion;
+        const shadowY = dy + expansion;
+        context.drawImage(image, shadowX, shadowY);
+    }
+
+    // Then, fill in the shadow where it intersets with the mask
     context.globalCompositeOperation = 'source-in';
-    context.globalAlpha = alpha;
-    context.fillStyle = 'black';
+    context.fillStyle = style;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw the source image on top

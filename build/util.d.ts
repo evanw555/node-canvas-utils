@@ -63,6 +63,14 @@ export declare function toCircle(image: Image | Canvas, options?: {
  */
 export declare function applyMask(image: Canvas | Image, mask: Canvas | Image): Canvas;
 /**
+ * Given a style string and a mask image, return a new canvas including every part of the mask image
+ * recolored to match the color specified in the style string.
+ * @param style The style string (i.e. color)
+ * @param mask Mask image (or canvas)
+ * @returns The specified color in the shape of the mask image
+ */
+export declare function fillWithMask(style: string, mask: Canvas | Image): Canvas;
+/**
  * Given a source image, return a new canvas with a drop shadow added to all visible parts of the source image.
  * @param image Source image
  * @param options.expandCanvas If true, a margin will be added on all sides to ensure the drop shadow fits. Else, the dimensions will remain the same.
@@ -76,6 +84,23 @@ export declare function withDropShadow(image: Canvas | Image, options?: {
     alpha?: number;
     angle?: number;
     distance?: number;
+}): Canvas;
+/**
+ * Given a source image, return a new canvas with an outline added around all visible parts of the source image.
+ * @param image Source image
+ * @param options.expandCanvas If true, a margin will be added on all sides to ensure the outline fits. Else, the dimensions will remain the same.
+ * @param options.style The style (i.e. color) string of the outline (default half-transparent black)
+ * @param options.thickness The thickness (in pixels) of the outline (default 3)
+ * @param options.quality How many different angles to cover around the shape when drawing the outline (default 16 or 32 for larger images)
+ * @param options.initialAngle The angle (in radians) to start drawing outlines from (default 0)
+ * @returns New canvas including the source image with an added outline
+ */
+export declare function withOutline(image: Canvas | Image, options?: {
+    expandCanvas?: boolean;
+    style?: string;
+    thickness?: number;
+    quality?: number;
+    initialAngle?: number;
 }): Canvas;
 /**
  * Given any number of source images, superimpose them onto one another in the order provided (last image will show up on top).

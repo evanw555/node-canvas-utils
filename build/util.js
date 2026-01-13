@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withDropShadow = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 /**
  * Resizes the provided canvas/image to the specified dimensions.
@@ -223,6 +223,27 @@ function applyMask(image, mask) {
 }
 exports.applyMask = applyMask;
 /**
+ * Given a style string and a mask image, return a new canvas including every part of the mask image
+ * recolored to match the color specified in the style string.
+ * @param style The style string (i.e. color)
+ * @param mask Mask image (or canvas)
+ * @returns The specified color in the shape of the mask image
+ */
+function fillWithMask(style, mask) {
+    // First, create a canvas containing only the provided color
+    const canvas = (0, canvas_1.createCanvas)(mask.width, mask.height);
+    const context = canvas.getContext('2d');
+    context.fillStyle = style;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    // Then, apply the mask
+    context.save();
+    context.globalCompositeOperation = 'destination-in';
+    context.drawImage(mask, 0, 0, canvas.width, canvas.height);
+    context.restore();
+    return canvas;
+}
+exports.fillWithMask = fillWithMask;
+/**
  * Given a source image, return a new canvas with a drop shadow added to all visible parts of the source image.
  * @param image Source image
  * @param options.expandCanvas If true, a margin will be added on all sides to ensure the drop shadow fits. Else, the dimensions will remain the same.
@@ -233,33 +254,63 @@ exports.applyMask = applyMask;
  */
 function withDropShadow(image, options) {
     var _a, _b, _c, _d;
+    // We can draw a drop shadow by basically drawing an outline with the lowest quality possible
+    return withOutline(image, {
+        expandCanvas: (_a = options === null || options === void 0 ? void 0 : options.expandCanvas) !== null && _a !== void 0 ? _a : false,
+        style: `rgba(0,0,0,${(_b = options === null || options === void 0 ? void 0 : options.alpha) !== null && _b !== void 0 ? _b : 0.5})`,
+        thickness: (_c = options === null || options === void 0 ? void 0 : options.distance) !== null && _c !== void 0 ? _c : 3,
+        quality: 1,
+        initialAngle: (_d = options === null || options === void 0 ? void 0 : options.alpha) !== null && _d !== void 0 ? _d : (Math.PI * 1.75)
+    });
+}
+exports.withDropShadow = withDropShadow;
+/**
+ * Given a source image, return a new canvas with an outline added around all visible parts of the source image.
+ * @param image Source image
+ * @param options.expandCanvas If true, a margin will be added on all sides to ensure the outline fits. Else, the dimensions will remain the same.
+ * @param options.style The style (i.e. color) string of the outline (default half-transparent black)
+ * @param options.thickness The thickness (in pixels) of the outline (default 3)
+ * @param options.quality How many different angles to cover around the shape when drawing the outline (default 16 or 32 for larger images)
+ * @param options.initialAngle The angle (in radians) to start drawing outlines from (default 0)
+ * @returns New canvas including the source image with an added outline
+ */
+function withOutline(image, options) {
+    var _a, _b, _c, _d, _e;
+    // This function essentially applies a drop shadow many times to simulate an outline
     const expandCanvas = (_a = options === null || options === void 0 ? void 0 : options.expandCanvas) !== null && _a !== void 0 ? _a : false;
-    const alpha = (_b = options === null || options === void 0 ? void 0 : options.alpha) !== null && _b !== void 0 ? _b : 0.5;
-    const angle = (_c = options === null || options === void 0 ? void 0 : options.angle) !== null && _c !== void 0 ? _c : Math.PI * 1.75;
-    const distance = (_d = options === null || options === void 0 ? void 0 : options.distance) !== null && _d !== void 0 ? _d : 3;
-    const dx = distance * Math.cos(angle);
-    const dy = distance * -Math.sin(angle);
-    const expansion = expandCanvas ? distance : 0;
+    const style = (_b = options === null || options === void 0 ? void 0 : options.style) !== null && _b !== void 0 ? _b : 'rgba(0,0,0,0.5)';
+    const thickness = (_c = options === null || options === void 0 ? void 0 : options.thickness) !== null && _c !== void 0 ? _c : 3;
+    // For the default quality, only raise it by default if the image is large enough
+    const quality = Math.max(1, (_d = options === null || options === void 0 ? void 0 : options.quality) !== null && _d !== void 0 ? _d : (image.width >= 1000 ? 32 : 16));
+    const initialAngle = (_e = options === null || options === void 0 ? void 0 : options.initialAngle) !== null && _e !== void 0 ? _e : 0;
+    const expansion = expandCanvas ? thickness : 0;
     const width = image.width + 2 * expansion;
     const height = image.height + 2 * expansion;
     const canvas = (0, canvas_1.createCanvas)(width, height);
     const context = canvas.getContext('2d');
     context.save();
-    // First, draw the offset source image as a mask for where the shadow will appear
-    const shadowX = dx + expansion;
-    const shadowY = dy + expansion;
-    context.drawImage(image, shadowX, shadowY);
-    // Then, fill the shadow where it intersects with the mask
+    // Use "source-out" to avoid writing to the same pixel multiple times (would affect alphas)
+    // TODO: Doesn't seem to be working as expected, so come back to this later
+    // context.globalCompositeOperation = 'source-out';
+    // First, draw the source image offset multiple times around the center to create the outline mask
+    for (let i = 0; i < quality; i++) {
+        const angle = initialAngle + (i / quality) * 2 * Math.PI;
+        const dx = thickness * Math.cos(angle);
+        const dy = thickness * -Math.sin(angle);
+        const shadowX = dx + expansion;
+        const shadowY = dy + expansion;
+        context.drawImage(image, shadowX, shadowY);
+    }
+    // Then, fill in the shadow where it intersets with the mask
     context.globalCompositeOperation = 'source-in';
-    context.globalAlpha = alpha;
-    context.fillStyle = 'black';
+    context.fillStyle = style;
     context.fillRect(0, 0, canvas.width, canvas.height);
     // Draw the source image on top
     context.restore();
     context.drawImage(image, expansion, expansion);
     return canvas;
 }
-exports.withDropShadow = withDropShadow;
+exports.withOutline = withOutline;
 /**
  * Given any number of source images, superimpose them onto one another in the order provided (last image will show up on top).
  * All images will be center-aligned and the output canvas will be sized to fit every image at its native resolution.
