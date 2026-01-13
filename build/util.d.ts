@@ -27,6 +27,19 @@ export declare function joinCanvasesVertical(canvases: (Canvas | Image)[], optio
     spacing?: number;
 }): Canvas;
 /**
+ * Joins a list of canvases (or images) into an evenly-spaced grid.
+ * Either the number of rows or columns may be specified or left to be computed automatically.
+ * If neither dimension is specified, then the canvases will be joined into a square grid.
+ * @param canvases List of source canvases/images
+ * @param options.rows The desired number of rows
+ * @param options.columns The desired number of columns
+ * @returns The source canvases joined as a grid
+ */
+export declare function joinCanvasesAsEvenGrid(canvases: (Canvas | Image)[], options?: {
+    rows?: number;
+    columns?: number;
+}): Canvas;
+/**
  * Returns a new canvas containing the source canvas/image with added margins of a specified size (or sizes).
  * @param canvas The source image/canvas
  * @param margin Width of the margin for all four sides if numeric, else the width of each particular margin

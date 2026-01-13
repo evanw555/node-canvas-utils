@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 /**
  * Resizes the provided canvas/image to the specified dimensions.
@@ -132,6 +132,54 @@ function joinCanvasesVertical(canvases, options) {
     return compositeCanvas;
 }
 exports.joinCanvasesVertical = joinCanvasesVertical;
+/**
+ * Joins a list of canvases (or images) into an evenly-spaced grid.
+ * Either the number of rows or columns may be specified or left to be computed automatically.
+ * If neither dimension is specified, then the canvases will be joined into a square grid.
+ * @param canvases List of source canvases/images
+ * @param options.rows The desired number of rows
+ * @param options.columns The desired number of columns
+ * @returns The source canvases joined as a grid
+ */
+function joinCanvasesAsEvenGrid(canvases, options) {
+    var _a, _b;
+    if (!canvases || canvases.length === 0) {
+        throw new Error('Cannot join an empty list of canvases');
+    }
+    const n = canvases.length;
+    let rows;
+    let columns;
+    if ((options === null || options === void 0 ? void 0 : options.rows) === undefined) {
+        columns = (_a = options === null || options === void 0 ? void 0 : options.columns) !== null && _a !== void 0 ? _a : Math.round(Math.sqrt(n));
+        rows = Math.ceil(n / columns);
+    }
+    else {
+        rows = options === null || options === void 0 ? void 0 : options.rows;
+        columns = (_b = options === null || options === void 0 ? void 0 : options.columns) !== null && _b !== void 0 ? _b : Math.ceil(n / rows);
+    }
+    // Validate this math before anything else
+    if (n > rows * columns) {
+        throw new Error(`Cannot join ${n} canvas${n === 1 ? '' : 's'} into a ${rows}x${columns} grid`);
+    }
+    // Construct the canvas using the max width and height of all canvases
+    const maxColumnWidth = Math.max(...canvases.map(c => c.width));
+    const maxRowHeight = Math.max(...canvases.map(c => c.height));
+    const canvas = (0, canvas_1.createCanvas)(maxColumnWidth * columns, maxRowHeight * rows);
+    const context = canvas.getContext('2d');
+    // Draw each canvas one by one
+    for (let i = 0; i < n; i++) {
+        const c = i % columns;
+        const r = Math.floor(i / columns);
+        const baseX = c * maxColumnWidth;
+        const baseY = r * maxRowHeight;
+        const canvas = canvases[i];
+        const marginX = Math.floor((maxColumnWidth - canvas.width) / 2);
+        const marginY = Math.floor((maxRowHeight - canvas.height) / 2);
+        context.drawImage(canvas, baseX + marginX, baseY + marginY);
+    }
+    return canvas;
+}
+exports.joinCanvasesAsEvenGrid = joinCanvasesAsEvenGrid;
 /**
  * Returns a new canvas containing the source canvas/image with added margins of a specified size (or sizes).
  * @param canvas The source image/canvas

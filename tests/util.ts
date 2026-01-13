@@ -1,17 +1,54 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, joinCanvasesVertical, superimpose, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, joinCanvasesAsEvenGrid, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
-import { Image, loadImage } from 'canvas';
+import { Canvas, Image, loadImage } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
 describe('General Util tests', () => {
     const maskHelloText = getTextLabel('Hello, World!', { width: 1000, height: 250, style: 'darkgreen', align: 'center' });
     let maskDice: Image;
+    let maskAlert: Image;
+    let maskGuy: Image;
+    let maskLeaf: Image;
+    let maskVial: Image;
 
     before(async () => {
         maskDice = await loadImage('assets/dice.png');
+        maskAlert = await loadImage('assets/alert.png');
+        maskGuy = await loadImage('assets/guy.png');
+        maskLeaf = await loadImage('assets/leaf.png');
+        maskVial = await loadImage('assets/vial.png');
+    });
+
+    it('can join canvases as an even grid', () => {
+        // TODO: This one just tests automatic square grids, lets add more test cases for different parameters
+        const rdm = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo));
+        const canvases: (Canvas | Image)[] = [];
+        if (Math.random() < 0.5) {
+            canvases.push(resize(maskDice, { height: rdm(200, 300) }));
+        }
+        if (Math.random() < 0.5) {
+            canvases.push(resize(maskLeaf, { height: rdm(150, 250) }));
+        }
+        if (Math.random() < 0.5) {
+            canvases.push(resize(maskGuy, { height: rdm(100, 200) }));
+        }
+        if (Math.random() < 0.5) {
+            canvases.push(resize(maskVial, { height: rdm(50, 150) }));
+        }
+        if (Math.random() < 0.5) {
+            canvases.push(resize(maskAlert, { height: rdm(10, 20) }));
+        }
+        const n = Math.floor(Math.random() * 30);
+        for (let i = 0; i < n; i++) {
+            canvases.push(getTextLabel(`${i}`, { height: Math.floor(12 + Math.random() * 150), style: 'black' }));
+        }
+        canvases.sort((x, y) => Math.random() - Math.random());
+        const final = fillBackground(joinCanvasesAsEvenGrid(canvases), { background: 'white' });
+        fs.writeFileSync('/tmp/node-canvas-utils/joinCanvasesAsEvenGrid.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/joinCanvasesAsEvenGrid.png')).is.true;
     });
 
     it('can superimpose images on top of each other', () => {
