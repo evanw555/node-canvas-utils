@@ -38,10 +38,15 @@ export function resize(image: Canvas | Image, options?: { width?: number, height
 
 /**
  * Joins a list of canvases together horizontally.
+ * @param canvases List of source canvases/images
+ * @param options.align How to vertically align each source canvas (default align at top)
+ * @param options.spacing How much spacing to add between each source canvas (default none)
+ * @param options.maxWidth Maximum width of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
-export function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: { align?: 'top' | 'bottom' | 'center' | 'resize-to-first' | 'resize-to-shortest' | 'resize-to-tallest', spacing?: number }): Canvas {
+export function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: { align?: 'top' | 'bottom' | 'center' | 'resize-to-first' | 'resize-to-shortest' | 'resize-to-tallest', spacing?: number, maxWidth?: number }): Canvas {
     const ALIGN = options?.align ?? 'top';
     const SPACING = options?.spacing ?? 0;
+    const MAX_WIDTH = options?.maxWidth ?? Number.MAX_SAFE_INTEGER;
 
     if (!canvases || canvases.length === 0) {
         throw new Error('Cannot join an empty list of canvases');
@@ -61,7 +66,9 @@ export function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: {
     const resizedCanvases = canvases.map(c => resize(c, { height: targetHeight ?? c.height }));
 
     // Prepare the composite canvas as per the resized canvas dimensions
-    const WIDTH = resizedCanvases.map(c => c.width).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
+    const IDEAL_WIDTH = resizedCanvases.map(c => c.width).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
+    const WIDTH = Math.min(IDEAL_WIDTH, MAX_WIDTH);
+    const LOST_WIDTH_PER_CANVAS = Math.ceil(Math.max(0, IDEAL_WIDTH - MAX_WIDTH) / Math.max(1, (canvases.length - 1)));
     const HEIGHT = Math.max(...resizedCanvases.map(c => c.height));
     const compositeCanvas = createCanvas(WIDTH, HEIGHT);
     const compositeContext = compositeCanvas.getContext('2d');
@@ -78,9 +85,10 @@ export function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: {
             // Top or resize-aligned
             y = 0;
         }
+        // Draw the canvas
         compositeContext.drawImage(resizedCanvas, baseX, y);
         // Advance the horizontal offset
-        baseX += resizedCanvas.width + SPACING;
+        baseX += resizedCanvas.width + SPACING - LOST_WIDTH_PER_CANVAS;
     }
 
     return compositeCanvas;
@@ -88,10 +96,15 @@ export function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: {
 
 /**
  * Joins a list of canvases together vertically.
+ * @param canvases List of source canvases/images
+ * @param options.align How to horizontally align each source canvas (default align on left)
+ * @param options.spacing How much spacing to add between each source canvas (default none)
+ * @param options.maxHeight Maximum height of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
-export function joinCanvasesVertical(canvases: (Canvas | Image)[], options?: { align?: 'left' | 'right' | 'center' | 'resize-to-first' | 'resize-to-thinnest' | 'resize-to-widest', spacing?: number }): Canvas {
+export function joinCanvasesVertical(canvases: (Canvas | Image)[], options?: { align?: 'left' | 'right' | 'center' | 'resize-to-first' | 'resize-to-thinnest' | 'resize-to-widest', spacing?: number, maxHeight?: number }): Canvas {
     const ALIGN = options?.align ?? 'left';
     const SPACING = options?.spacing ?? 0;
+    const MAX_HEIGHT = options?.maxHeight ?? Number.MAX_SAFE_INTEGER;
 
     if (!canvases || canvases.length === 0) {
         throw new Error('Cannot join an empty list of canvases');
@@ -112,7 +125,9 @@ export function joinCanvasesVertical(canvases: (Canvas | Image)[], options?: { a
 
     // Prepare the composite canvas as per the resized canvas dimensions
     const WIDTH = Math.max(...resizedCanvases.map(c => c.width));
-    const HEIGHT = resizedCanvases.map(c => c.height).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
+    const IDEAL_HEIGHT = resizedCanvases.map(c => c.height).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
+    const HEIGHT = Math.min(IDEAL_HEIGHT, MAX_HEIGHT);
+    const LOST_HEIGHT_PER_CANVAS = Math.ceil(Math.max(0, IDEAL_HEIGHT - MAX_HEIGHT) / Math.max(1, (canvases.length - 1)));
     const compositeCanvas = createCanvas(WIDTH, HEIGHT);
     const compositeContext = compositeCanvas.getContext('2d');
 
@@ -130,7 +145,7 @@ export function joinCanvasesVertical(canvases: (Canvas | Image)[], options?: { a
         }
         compositeContext.drawImage(resizedCanvas, x, baseY);
         // Advance the vertical offset
-        baseY += resizedCanvas.height + SPACING;
+        baseY += resizedCanvas.height + SPACING - LOST_HEIGHT_PER_CANVAS;
     }
 
     return compositeCanvas;

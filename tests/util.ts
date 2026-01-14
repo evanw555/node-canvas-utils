@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, joinCanvasesAsEvenGrid, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
 import { Canvas, Image, loadImage } from 'canvas';
 
@@ -20,6 +20,38 @@ describe('General Util tests', () => {
         maskGuy = await loadImage('assets/guy.png');
         maskLeaf = await loadImage('assets/leaf.png');
         maskVial = await loadImage('assets/vial.png');
+    });
+
+    it('can join canvases horizontally', () => {
+        const a = resize(maskAlert, { height: 32 });
+        const alerts = [a, a, a, a, a, a, a, a];
+        // Draw a canvas at ideal width
+        const c1 = joinCanvasesHorizontal(alerts);
+        const c2 = joinCanvasesHorizontal(alerts, { spacing: 16, maxWidth: a.width * 100 });
+        // When the ideal width exceeds the max width, compress all canvases
+        const c3 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 4, spacing: 16 });
+        const c4 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 6 });
+        const c5 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 8 });
+        const c6 = joinCanvasesHorizontal([a], { maxWidth: a.width / 2 });
+        const final = fillBackground(joinCanvasesVertical([c1, c2, c3, c4, c5, c6]), { background: 'white' });
+        fs.writeFileSync('/tmp/node-canvas-utils/joinCanvasesHorizontal.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/joinCanvasesHorizontal.png')).is.true;
+    });
+
+    it('can join canvases vertically', () => {
+        const a = resize(maskAlert, { width: 32 });
+        const alerts = [a, a, a, a, a, a, a, a];
+        // Draw a canvas at ideal height
+        const c1 = joinCanvasesVertical(alerts);
+        const c2 = joinCanvasesVertical(alerts, { spacing: 16, maxHeight: a.height * 100 });
+        // When the ideal height exceeds the max height, compress all canvases
+        const c3 = joinCanvasesVertical(alerts, { maxHeight: a.height * 4, spacing: 16 });
+        const c4 = joinCanvasesVertical(alerts, { maxHeight: a.height * 6 });
+        const c5 = joinCanvasesVertical(alerts, { maxHeight: a.height * 8 });
+        const c6 = joinCanvasesVertical([a], { maxHeight: a.height / 2 });
+        const final = fillBackground(joinCanvasesHorizontal([c1, c2, c3, c4, c5, c6]), { background: 'white' });
+        fs.writeFileSync('/tmp/node-canvas-utils/joinCanvasesVertical.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/joinCanvasesVertical.png')).is.true;
     });
 
     it('can join canvases as an even grid', () => {

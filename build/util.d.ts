@@ -14,17 +14,27 @@ export declare function resize(image: Canvas | Image, options?: {
 }): Canvas | Image;
 /**
  * Joins a list of canvases together horizontally.
+ * @param canvases List of source canvases/images
+ * @param options.align How to vertically align each source canvas (default align at top)
+ * @param options.spacing How much spacing to add between each source canvas (default none)
+ * @param options.maxWidth Maximum width of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
 export declare function joinCanvasesHorizontal(canvases: (Canvas | Image)[], options?: {
     align?: 'top' | 'bottom' | 'center' | 'resize-to-first' | 'resize-to-shortest' | 'resize-to-tallest';
     spacing?: number;
+    maxWidth?: number;
 }): Canvas;
 /**
  * Joins a list of canvases together vertically.
+ * @param canvases List of source canvases/images
+ * @param options.align How to horizontally align each source canvas (default align on left)
+ * @param options.spacing How much spacing to add between each source canvas (default none)
+ * @param options.maxHeight Maximum height of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
 export declare function joinCanvasesVertical(canvases: (Canvas | Image)[], options?: {
     align?: 'left' | 'right' | 'center' | 'resize-to-first' | 'resize-to-thinnest' | 'resize-to-widest';
     spacing?: number;
+    maxHeight?: number;
 }): Canvas;
 /**
  * Joins a list of canvases (or images) into an evenly-spaced grid.
