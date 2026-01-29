@@ -5,7 +5,9 @@ import { crop, getRotated, joinCanvasesVertical, resize, superimpose, withDropSh
 interface WheelOfFortuneTileRenderData {
     content: number | string | Image | WheelOfFortuneTileRenderData[],
     fillStyle?: string,
-    textStyle?: string
+    textStyle?: string,
+    /** If true, text will be render horizontally rather than vertically. */
+    horizontal?: true
 }
 
 // TODO: Clean up and document
@@ -17,7 +19,7 @@ export function createWheelOfFortune(tiles: WheelOfFortuneTileRenderData[]): Can
         const tile = tiles[i];
         const tileStyle = tile.fillStyle ?? 'red';
         const textStyle = tile.textStyle ?? 'white';
-        const tileImage = createWheelOfFortuneTile(tile.content, { n: N, tileStyle, textStyle });
+        const tileImage = createWheelOfFortuneTile(tile.content, { n: N, tileStyle, textStyle, horizontal: tile.horizontal });
         const expanded = createCanvas(2 * R, 2 * R);
         const c = expanded.getContext('2d');
         c.drawImage(tileImage, (expanded.width - tileImage.width) / 2, 0);
@@ -28,9 +30,10 @@ export function createWheelOfFortune(tiles: WheelOfFortuneTileRenderData[]): Can
 }
 
 // TODO: Clean up and document
-export function createWheelOfFortuneTile(content: number | string | Image | WheelOfFortuneTileRenderData[], options?: { r?: number, n?: number, tileStyle?: string, textStyle?: string }): Canvas {
+export function createWheelOfFortuneTile(content: number | string | Image | WheelOfFortuneTileRenderData[], options?: { r?: number, n?: number, tileStyle?: string, textStyle?: string, horizontal?: true }): Canvas {
     const R = options?.r ?? 300;
     const N = options?.n ?? 24;
+    const HORIZONTAL = options?.horizontal ?? false;
 
     const theta = 2 * Math.PI / N;
     const phi = (Math.PI - theta) / 2;
@@ -91,13 +94,15 @@ export function createWheelOfFortuneTile(content: number | string | Image | Whee
     if (typeof content === 'number') {
         // TODO: Can we always assume cents? Should we add an option for dollars?
         const cent = getTextLabel('¢', { height: unit * 0.6, align: 'center', font: `${unit * 0.6}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
-        const text = getVerticalTextLabel(content.toString(), { height: unit, align: 'center', font: `${unit * 1.25}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
+        const fn = HORIZONTAL ? getTextLabel : getVerticalTextLabel;
+        const text = fn(content.toString(), { height: unit, align: 'center', font: `${unit * 1.25}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
         const joined = withDropShadow(joinCanvasesVertical([cent, text], { align: 'center' }), { expandCanvas: true, distance: unit / 15 });
         c.drawImage(joined, (WIDTH - joined.width) / 2, 0);
     }
     // If it's a string, write as a label
     if (typeof content === 'string') {
-        const text = getVerticalTextLabel(content.toString(), { height: unit * 0.9, align: 'center', font: `${unit}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
+        const fn = HORIZONTAL ? getTextLabel : getVerticalTextLabel;
+        const text = fn(content.toString(), { height: unit * 0.9, align: 'center', font: `${unit}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
         const label = withDropShadow(text, { expandCanvas: true, distance: unit / 15 });
         c.drawImage(label, (WIDTH - label.width) / 2, unit / 10, label.width, Math.min(label.height, canvas.height * 0.6));
     }

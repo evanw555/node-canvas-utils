@@ -33,7 +33,9 @@ describe('General Util tests', () => {
         const c4 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 6 });
         const c5 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 8 });
         const c6 = joinCanvasesHorizontal([a], { maxWidth: a.width / 2 });
-        const final = fillBackground(joinCanvasesVertical([c1, c2, c3, c4, c5, c6]), { background: 'white' });
+        // In this case, only the spacing will be sacrificed to achieve the max width
+        const c7 = joinCanvasesHorizontal(alerts, { maxWidth: a.width * 9, spacing: a.width * 5 });
+        const final = fillBackground(joinCanvasesVertical([c1, c2, c3, c4, c5, c6, c7]), { background: 'white' });
         fs.writeFileSync('/tmp/node-canvas-utils/joinCanvasesHorizontal.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/joinCanvasesHorizontal.png')).is.true;
     });
@@ -49,7 +51,9 @@ describe('General Util tests', () => {
         const c4 = joinCanvasesVertical(alerts, { maxHeight: a.height * 6 });
         const c5 = joinCanvasesVertical(alerts, { maxHeight: a.height * 8 });
         const c6 = joinCanvasesVertical([a], { maxHeight: a.height / 2 });
-        const final = fillBackground(joinCanvasesHorizontal([c1, c2, c3, c4, c5, c6]), { background: 'white' });
+        // In this case, only the spacing will be sacrificed to achieve the max height
+        const c7 = joinCanvasesVertical(alerts, { maxHeight: a.height * 9, spacing: a.height * 5 });
+        const final = fillBackground(joinCanvasesHorizontal([c1, c2, c3, c4, c5, c6, c7]), { background: 'white' });
         fs.writeFileSync('/tmp/node-canvas-utils/joinCanvasesVertical.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/joinCanvasesVertical.png')).is.true;
     });

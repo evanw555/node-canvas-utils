@@ -3,6 +3,8 @@ interface WheelOfFortuneTileRenderData {
     content: number | string | Image | WheelOfFortuneTileRenderData[];
     fillStyle?: string;
     textStyle?: string;
+    /** If true, text will be render horizontally rather than vertically. */
+    horizontal?: true;
 }
 export declare function createWheelOfFortune(tiles: WheelOfFortuneTileRenderData[]): Canvas;
 export declare function createWheelOfFortuneTile(content: number | string | Image | WheelOfFortuneTileRenderData[], options?: {
@@ -10,6 +12,7 @@ export declare function createWheelOfFortuneTile(content: number | string | Imag
     n?: number;
     tileStyle?: string;
     textStyle?: string;
+    horizontal?: true;
 }): Canvas;
 export {};
 //# sourceMappingURL=games.d.ts.map
