@@ -1,6 +1,6 @@
 {
     "name": "node-canvas-utils",
-    "version": "1.1.12",
+    "version": "1.1.13",
     "description": "Various utilities aiding the usage of node-canvas",
     "author": "Evan Williams",
     "main": "./build/index.js",
@@ -14,7 +14,8 @@
     },
     "dependencies": {
         "chai": "4.3.6",
-        "canvas": "2.9.1"
+        "canvas": "2.9.1",
+        "@cwasm/webp": "0.1.5"
     },
     "devDependencies": {
         "@types/chai": "4.3.3",

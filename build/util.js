@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
+const webp_1 = require("@cwasm/webp");
 /**
  * Resizes the provided canvas/image to the specified dimensions.
  * If only one dimension is specified, the aspect ratio will be locked and the other dimension will be inferred.
@@ -549,4 +550,19 @@ function cropToSquare(image) {
     return crop(image, { width: MIN_DIMENSION, height: MIN_DIMENSION, horizontal: 'center', vertical: 'center' });
 }
 exports.cropToSquare = cropToSquare;
+function fromWebp(b) {
+    const decoded = (0, webp_1.decode)(b);
+    // const image = new Image();
+    // image.src = Buffer.from(decoded.data);
+    // image.height = decoded.height;
+    // image.width = decoded.width;
+    // image.complete = true;
+    // return image;
+    const canvas = (0, canvas_1.createCanvas)(decoded.width, decoded.height);
+    const c = canvas.getContext('2d');
+    const imageData = new canvas_1.ImageData(decoded.data, decoded.width, decoded.height);
+    c.putImageData(imageData, 0, 0);
+    return canvas;
+}
+exports.fromWebp = fromWebp;
 //# sourceMappingURL=util.js.map

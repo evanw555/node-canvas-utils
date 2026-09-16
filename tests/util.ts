@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, fromWebp, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
 import { Canvas, Image, loadImage } from 'canvas';
 
@@ -146,5 +146,16 @@ describe('General Util tests', () => {
         const final = fillBackground(joinCanvasesVertical([c1, c2, c3, c4, c5, c6, c7, c8, c9]), { background: 'white' });
         fs.writeFileSync('/tmp/node-canvas-utils/withOutline.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/withOutline.png')).is.true;
+    });
+
+    it('can decode .webp buffers', () => {
+        const webp = fs.readFileSync('assets/sample.webp');
+        const png = fromWebp(webp);
+        const final = joinCanvasesVertical([
+            getTextLabel('Decoded from .webp'),
+            png
+        ], { align: 'resize-to-first' });
+        fs.writeFileSync('/tmp/node-canvas-utils/fromWebp.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/fromWebp.png')).is.true;
     });
 });

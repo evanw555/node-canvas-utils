@@ -1,4 +1,5 @@
-import { Canvas, Image, createCanvas } from "canvas";
+import { Canvas, Image, ImageData as NodeCanvasImageData , createCanvas } from "canvas";
+import { decode } from '@cwasm/webp';
 import { GraphPalette } from "./types";
 
 /**
@@ -586,4 +587,19 @@ export function cropAroundPoints(image: Image | Canvas, points: { x: number, y: 
 export function cropToSquare(image: Image | Canvas): Canvas {
     const MIN_DIMENSION = Math.min(image.width, image.height);
     return crop(image, { width: MIN_DIMENSION, height: MIN_DIMENSION, horizontal: 'center', vertical: 'center' });
+}
+
+export function fromWebp(b: Buffer): Canvas {
+    const decoded = decode(b);
+    // const image = new Image();
+    // image.src = Buffer.from(decoded.data);
+    // image.height = decoded.height;
+    // image.width = decoded.width;
+    // image.complete = true;
+    // return image;
+    const canvas = createCanvas(decoded.width, decoded.height);
+    const c = canvas.getContext('2d');
+    const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
+    c.putImageData(imageData, 0, 0);
+    return canvas;
 }

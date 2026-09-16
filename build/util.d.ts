@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { Canvas, Image } from "canvas";
 import { GraphPalette } from "./types";
 /**
@@ -187,4 +188,5 @@ export declare function cropAroundPoints(image: Image | Canvas, points: {
  * @returns New canvas containing the center-cropped image
  */
 export declare function cropToSquare(image: Image | Canvas): Canvas;
+export declare function fromWebp(b: Buffer): Canvas;
 //# sourceMappingURL=util.d.ts.map
