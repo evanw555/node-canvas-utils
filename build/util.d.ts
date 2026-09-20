@@ -188,5 +188,5 @@ export declare function cropAroundPoints(image: Image | Canvas, points: {
  * @returns New canvas containing the center-cropped image
  */
 export declare function cropToSquare(image: Image | Canvas): Canvas;
-export declare function loadWebp(b: Buffer): Promise<Image>;
+export declare function fromWebp(b: Buffer): Canvas;
 //# sourceMappingURL=util.d.ts.map

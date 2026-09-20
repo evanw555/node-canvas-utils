@@ -1,5 +1,5 @@
 import { Canvas, Image, ImageData as NodeCanvasImageData , createCanvas } from "canvas";
-import { decode } from '@cwasm/webp';
+import { decode as decodeWebp } from '@cwasm/webp';
 import { GraphPalette } from "./types";
 
 /**
@@ -589,25 +589,35 @@ export function cropToSquare(image: Image | Canvas): Canvas {
     return crop(image, { width: MIN_DIMENSION, height: MIN_DIMENSION, horizontal: 'center', vertical: 'center' });
 }
 
-export async function loadWebp(b: Buffer): Promise<Image> {
-    return new Promise<Image>((resolve, reject) => {
-        const decoded = decode(b);
-        const image = new Image();
-        image.onload = () => {
-            resolve(image);
-        };
-        image.onerror = (err) => {
-            reject(err);
-        };
-        image.width = decoded.width;
-        image.height = decoded.height;
-        // Write the webp image data to a canvas
-        const canvas = createCanvas(decoded.width, decoded.height);
-        const c = canvas.getContext('2d');
-        const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
-        c.putImageData(imageData, 0, 0);
-        // Feed that canvas' buffer into the image source
-        // TODO: Is there a way to do this without the canvas step?
-        image.src = canvas.toBuffer();
-    });
+export function fromWebp(b: Buffer): Canvas {
+    const decoded = decodeWebp(b);
+    const canvas = createCanvas(decoded.width, decoded.height);
+    const c = canvas.getContext('2d');
+    const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
+    c.putImageData(imageData, 0, 0);
+    return canvas;
 }
+
+// TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
+// export async function loadWebp(b: Buffer): Promise<Image> {
+//     return new Promise<Image>((resolve, reject) => {
+//         const decoded = decode(b);
+//         const image = new Image();
+//         image.onload = () => {
+//             resolve(image);
+//         };
+//         image.onerror = (err) => {
+//             reject(err);
+//         };
+//         image.width = decoded.width;
+//         image.height = decoded.height;
+//         // Write the webp image data to a canvas
+//         const canvas = createCanvas(decoded.width, decoded.height);
+//         const c = canvas.getContext('2d');
+//         const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
+//         c.putImageData(imageData, 0, 0);
+//         // Feed that canvas' buffer into the image source
+//         // TODO: Is there a way to do this without the canvas step?
+//         image.src = canvas.toBuffer();
+//     });
+// }

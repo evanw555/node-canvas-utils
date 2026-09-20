@@ -1,15 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
 /**
@@ -559,29 +550,36 @@ function cropToSquare(image) {
     return crop(image, { width: MIN_DIMENSION, height: MIN_DIMENSION, horizontal: 'center', vertical: 'center' });
 }
 exports.cropToSquare = cropToSquare;
-function loadWebp(b) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            const decoded = (0, webp_1.decode)(b);
-            const image = new canvas_1.Image();
-            image.onload = () => {
-                resolve(image);
-            };
-            image.onerror = (err) => {
-                reject(err);
-            };
-            image.width = decoded.width;
-            image.height = decoded.height;
-            // Write the webp image data to a canvas
-            const canvas = (0, canvas_1.createCanvas)(decoded.width, decoded.height);
-            const c = canvas.getContext('2d');
-            const imageData = new canvas_1.ImageData(decoded.data, decoded.width, decoded.height);
-            c.putImageData(imageData, 0, 0);
-            // Feed that canvas' buffer into the image source
-            // TODO: Is there a way to do this without the canvas step?
-            image.src = canvas.toBuffer();
-        });
-    });
+function fromWebp(b) {
+    const decoded = (0, webp_1.decode)(b);
+    const canvas = (0, canvas_1.createCanvas)(decoded.width, decoded.height);
+    const c = canvas.getContext('2d');
+    const imageData = new canvas_1.ImageData(decoded.data, decoded.width, decoded.height);
+    c.putImageData(imageData, 0, 0);
+    return canvas;
 }
-exports.loadWebp = loadWebp;
+exports.fromWebp = fromWebp;
+// TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
+// export async function loadWebp(b: Buffer): Promise<Image> {
+//     return new Promise<Image>((resolve, reject) => {
+//         const decoded = decode(b);
+//         const image = new Image();
+//         image.onload = () => {
+//             resolve(image);
+//         };
+//         image.onerror = (err) => {
+//             reject(err);
+//         };
+//         image.width = decoded.width;
+//         image.height = decoded.height;
+//         // Write the webp image data to a canvas
+//         const canvas = createCanvas(decoded.width, decoded.height);
+//         const c = canvas.getContext('2d');
+//         const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
+//         c.putImageData(imageData, 0, 0);
+//         // Feed that canvas' buffer into the image source
+//         // TODO: Is there a way to do this without the canvas step?
+//         image.src = canvas.toBuffer();
+//     });
+// }
 //# sourceMappingURL=util.js.map
