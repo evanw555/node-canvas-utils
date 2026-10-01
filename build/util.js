@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.skew = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
 /**
@@ -559,6 +559,25 @@ function fromWebp(b) {
     return canvas;
 }
 exports.fromWebp = fromWebp;
+/**
+ * Given a source image, skew the bottom of it left and right and/or the right side of it up or down.
+ * Expands the canvas to fit the skewed image neatly.
+ * @param image Source image
+ * @param options.dx Distance in pixels to skew horizontally (negative is left, positive is right)
+ * @param options.dy Distance in pixels to skew vertically (negative is up, positive is down)
+ * @returns New canvas containing the vertically-skewed image
+ */
+function skew(image, options) {
+    var _a, _b;
+    const dx = (_a = options === null || options === void 0 ? void 0 : options.dx) !== null && _a !== void 0 ? _a : 0;
+    const dy = (_b = options === null || options === void 0 ? void 0 : options.dy) !== null && _b !== void 0 ? _b : 0;
+    const canvas = (0, canvas_1.createCanvas)(image.width + Math.abs(dx), image.height + Math.abs(dy));
+    const c = canvas.getContext('2d');
+    c.setTransform(1, dy / image.width, dx / image.height, 1, Math.max(0, -dx), Math.max(0, -dy));
+    c.drawImage(image, 0, 0);
+    return canvas;
+}
+exports.skew = skew;
 // TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
 // export async function loadWebp(b: Buffer): Promise<Image> {
 //     return new Promise<Image>((resolve, reject) => {

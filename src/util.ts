@@ -598,6 +598,27 @@ export function fromWebp(b: Buffer): Canvas {
     return canvas;
 }
 
+/**
+ * Given a source image, skew the bottom of it left and right and/or the right side of it up or down.
+ * Expands the canvas to fit the skewed image neatly.
+ * @param image Source image
+ * @param options.dx Distance in pixels to skew horizontally (negative is left, positive is right)
+ * @param options.dy Distance in pixels to skew vertically (negative is up, positive is down)
+ * @returns New canvas containing the vertically-skewed image
+ */
+export function skew(image: Image | Canvas, options?: { dx?: number, dy?: number }): Canvas {
+    const dx = options?.dx ?? 0;
+    const dy = options?.dy ?? 0;
+
+    const canvas = createCanvas(image.width + Math.abs(dx), image.height + Math.abs(dy));
+    const c = canvas.getContext('2d');
+
+    c.setTransform(1, dy / image.width, dx / image.height, 1, Math.max(0, -dx), Math.max(0, -dy));
+    c.drawImage(image, 0, 0);
+
+    return canvas;
+}
+
 // TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
 // export async function loadWebp(b: Buffer): Promise<Image> {
 //     return new Promise<Image>((resolve, reject) => {

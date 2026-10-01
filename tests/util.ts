@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, fromWebp, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, fromWebp, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, skew, superimpose, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
-import { Canvas, Image, loadImage } from 'canvas';
+import { Canvas, Image, createCanvas, loadImage } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
@@ -157,5 +157,32 @@ describe('General Util tests', () => {
         ], { align: 'resize-to-first' }), { background: 'black' });
         fs.writeFileSync('/tmp/node-canvas-utils/fromWebp.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/fromWebp.png')).is.true;
+    });
+
+    it('can skew images', async () => {
+        const image = await loadImage('assets/poster.png');
+
+        const b = (image: Canvas) => {
+            const canvas = createCanvas(image.width, image.height);
+            const c = canvas.getContext('2d');
+            c.lineWidth = 8;
+            c.strokeStyle = 'black';
+            c.strokeRect(0, 0, image.width, image.height);
+            c.drawImage(image, 0, 0);
+            return canvas;
+        }
+
+        const final = joinCanvasesHorizontal([
+            b(skew(image)),
+            b(skew(image, { dx: image.width / 2})),
+            b(skew(image, { dx: -image.width / 2})),
+            b(skew(image, { dy: image.height / 2})),
+            b(skew(image, { dy: -image.height / 2})),
+            b(skew(image, { dx: -image.width / 2, dy: -image.height / 2})),
+            b(skew(image, { dx: image.width / 2, dy: image.height / 2}))
+        ]);
+
+        fs.writeFileSync('/tmp/node-canvas-utils/skew.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/skew.png')).is.true;
     });
 });

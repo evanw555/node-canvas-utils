@@ -189,4 +189,16 @@ export declare function cropAroundPoints(image: Image | Canvas, points: {
  */
 export declare function cropToSquare(image: Image | Canvas): Canvas;
 export declare function fromWebp(b: Buffer): Canvas;
+/**
+ * Given a source image, skew the bottom of it left and right and/or the right side of it up or down.
+ * Expands the canvas to fit the skewed image neatly.
+ * @param image Source image
+ * @param options.dx Distance in pixels to skew horizontally (negative is left, positive is right)
+ * @param options.dy Distance in pixels to skew vertically (negative is up, positive is down)
+ * @returns New canvas containing the vertically-skewed image
+ */
+export declare function skew(image: Image | Canvas, options?: {
+    dx?: number;
+    dy?: number;
+}): Canvas;
 //# sourceMappingURL=util.d.ts.map
