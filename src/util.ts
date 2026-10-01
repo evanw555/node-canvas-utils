@@ -619,6 +619,41 @@ export function skew(image: Image | Canvas, options?: { dx?: number, dy?: number
     return canvas;
 }
 
+/**
+ * Given a source image, warp it vertically according to specified left bounds and right bounds.
+ * @param image Source image
+ * @param options.leftY Distance in pixels to warp the top left
+ * @param options.leftH Height in pixels of the left bound
+ * @param options.rightY Distance in pixels to warp the top right
+ * @param options.rightH Height in pixels of the right bound
+ * @returns New canvas containing the image skewed along the X axis
+ */
+export function warpAlongX(image: Image | Canvas, options?: { leftY?: number, leftH?: number, rightY?: number, rightH?: number }): Canvas {
+    const leftY = options?.leftY ?? 0;
+    const leftH = options?.leftH ?? image.height;
+    const rightY = options?.rightY ?? 0;
+    const rightH = options?.rightH ?? image.height;
+
+    // TODO: Canvas should be expanded and possibly shrunk
+    const canvas = createCanvas(image.width, image.height);
+    const c = canvas.getContext('2d');
+
+    for (let x = 0; x < image.width; x++) {
+        const rx = x / image.width;
+
+        const y = leftY + rx * (rightY - leftY);
+        const h = leftH + rx * (rightH - leftH);
+
+        c.drawImage(image,
+            // Source bounds
+            x, 0, 1, image.height,
+            // Destination bounds
+            x, y, 1, h);
+    }
+
+    return canvas;
+}
+
 // TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
 // export async function loadWebp(b: Buffer): Promise<Image> {
 //     return new Promise<Image>((resolve, reject) => {

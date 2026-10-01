@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, fromWebp, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, skew, superimpose, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, fromWebp, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, skew, superimpose, warpAlongX, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
-import { Canvas, Image, createCanvas, loadImage } from 'canvas';
+import { Canvas, Image, createCanvas, loadImage, registerFont } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
@@ -185,4 +185,79 @@ describe('General Util tests', () => {
         fs.writeFileSync('/tmp/node-canvas-utils/skew.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/skew.png')).is.true;
     });
+
+    it('can warp images along the X axis', async () => {
+        const image = await loadImage('assets/poster.png');
+
+        const b = (image: Canvas) => {
+            const canvas = createCanvas(image.width, image.height);
+            const c = canvas.getContext('2d');
+            c.lineWidth = 8;
+            c.strokeStyle = 'black';
+            c.strokeRect(0, 0, image.width, image.height);
+            c.drawImage(image, 0, 0);
+            return canvas;
+        }
+
+        const final = joinCanvasesAsEvenGrid([
+            b(warpAlongX(image)),
+            b(warpAlongX(image, { rightY: image.height * 0.25, rightH: image.height * 0.25 })),
+            b(warpAlongX(image, { leftY: image.height * 0.25, leftH: image.height * 0.25 })),
+            b(warpAlongX(image, { leftY: image.height * 0, leftH: image.height * 0.25, rightY: image.height * 0.5, rightH: image.height * 0.25 })),
+            b(warpAlongX(image, { leftY: image.height * 0.05, leftH: image.height * 0.95, rightY: image.height * 0, rightH: image.height * 0.8 }))
+        ]);
+
+        fs.writeFileSync('/tmp/node-canvas-utils/warpAlongX.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/warpAlongX.png')).is.true;
+    });
+
+    // it('can preston presents...', async () => {
+    //     const template = await loadImage('assets/prestonpresents.png');
+
+    //     // Font must be registered before the canvas is created
+    //     registerFont('assets/cinema.ttf', { family: 'cinema' });
+    //     const canvas = createCanvas(template.width, template.height);
+    //     const c = canvas.getContext('2d');
+
+    //     // Draw the background template
+    //     c.drawImage(template, 0, 0);
+
+    //     const MARGIN = 25;
+
+    //     const INNER_COLOR = '#dbdada';
+    //     const ACCENT_COLOR = '#223c46';
+
+    //     const outline = (x: Canvas | Image) => {
+    //         return withDropShadow(withOutline(x, { thickness: 2, style: ACCENT_COLOR, expandCanvas: true }), { distance: 4, expandCanvas: true });
+    //     };
+
+    //     // Fetch the poster and draw on the wall
+    //     let posterWidth = 0;
+    //     const poster = await loadImage('assets/poster.png');
+    //     const resized = resize(poster, { width: 190 });
+    //     posterWidth = resized.width;
+    //     const warped = warpAlongX(resized, {
+    //         leftY: resized.height * 0.025,
+    //         leftH: resized.height * 0.975,
+    //         rightY: resized.height * 0,
+    //         rightH: resized.height * 0.885
+    //     });
+    //     c.drawImage(outline(warped), MARGIN, Math.min(MARGIN, MARGIN + 128 - Math.round(resized.height / 2)));
+
+    //     // Draw the content title text box
+    //     const title = getTextBox('Return of the Planet of the Apes (2039)', canvas.width - posterWidth - 2 * MARGIN, 42, { align: 'center', font: '48px Cinema', style: INNER_COLOR });
+    //     c.drawImage(outline(title), posterWidth + Math.round(1.5 * MARGIN), 70 + MARGIN - Math.round(title.height / 2));
+
+    //     // Draw the "Preston Presents" text box at the bottom
+    //     const flavorText1 = getTextLabel('Preston Presents:', { width: canvas.width, height: 54, align: 'center', font: 'italic 64px Cinema', style: INNER_COLOR });
+    //     const flavorText2 = getTextLabel('This Week\'s Pick', { width: canvas.width, height: 118, align: 'center', font: 'italic 120px Cinema', style: INNER_COLOR });
+    //     c.drawImage(outline(flavorText1), 0, canvas.height - flavorText2.height - flavorText1.height + 4);
+    //     c.drawImage(outline(flavorText2), 0, canvas.height - flavorText2.height);
+
+    //     // Outline the entire thing
+    //     const final = withOutline(canvas, { thickness: 8, expandCanvas: true, style: ACCENT_COLOR });
+
+    //     fs.writeFileSync('/tmp/node-canvas-utils/prestonpresents.png', final.toBuffer());
+    //     expect(fs.existsSync('/tmp/node-canvas-utils/prestonpresents.png')).is.true;
+    // });
 });

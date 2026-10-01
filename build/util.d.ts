@@ -201,4 +201,19 @@ export declare function skew(image: Image | Canvas, options?: {
     dx?: number;
     dy?: number;
 }): Canvas;
+/**
+ * Given a source image, warp it vertically according to specified left bounds and right bounds.
+ * @param image Source image
+ * @param options.leftY Distance in pixels to warp the top left
+ * @param options.leftH Height in pixels of the left bound
+ * @param options.rightY Distance in pixels to warp the top right
+ * @param options.rightH Height in pixels of the right bound
+ * @returns New canvas containing the image skewed along the X axis
+ */
+export declare function warpAlongX(image: Image | Canvas, options?: {
+    leftY?: number;
+    leftH?: number;
+    rightY?: number;
+    rightH?: number;
+}): Canvas;
 //# sourceMappingURL=util.d.ts.map

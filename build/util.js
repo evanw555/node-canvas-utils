@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.skew = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.warpAlongX = exports.skew = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
 /**
@@ -578,6 +578,37 @@ function skew(image, options) {
     return canvas;
 }
 exports.skew = skew;
+/**
+ * Given a source image, warp it vertically according to specified left bounds and right bounds.
+ * @param image Source image
+ * @param options.leftY Distance in pixels to warp the top left
+ * @param options.leftH Height in pixels of the left bound
+ * @param options.rightY Distance in pixels to warp the top right
+ * @param options.rightH Height in pixels of the right bound
+ * @returns New canvas containing the image skewed along the X axis
+ */
+function warpAlongX(image, options) {
+    var _a, _b, _c, _d;
+    const leftY = (_a = options === null || options === void 0 ? void 0 : options.leftY) !== null && _a !== void 0 ? _a : 0;
+    const leftH = (_b = options === null || options === void 0 ? void 0 : options.leftH) !== null && _b !== void 0 ? _b : image.height;
+    const rightY = (_c = options === null || options === void 0 ? void 0 : options.rightY) !== null && _c !== void 0 ? _c : 0;
+    const rightH = (_d = options === null || options === void 0 ? void 0 : options.rightH) !== null && _d !== void 0 ? _d : image.height;
+    // TODO: Canvas should be expanded and possibly shrunk
+    const canvas = (0, canvas_1.createCanvas)(image.width, image.height);
+    const c = canvas.getContext('2d');
+    for (let x = 0; x < image.width; x++) {
+        const rx = x / image.width;
+        const y = leftY + rx * (rightY - leftY);
+        const h = leftH + rx * (rightH - leftH);
+        c.drawImage(image, 
+        // Source bounds
+        x, 0, 1, image.height, 
+        // Destination bounds
+        x, y, 1, h);
+    }
+    return canvas;
+}
+exports.warpAlongX = warpAlongX;
 // TODO: This doesn't seem to work on a pi, keeping just in case it can be fixed
 // export async function loadWebp(b: Buffer): Promise<Image> {
 //     return new Promise<Image>((resolve, reject) => {
