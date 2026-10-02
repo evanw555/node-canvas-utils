@@ -1,8 +1,22 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.warpAlongX = exports.skew = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.warpAlongX = exports.skew = exports.loadImage2 = exports.isWebpBuffer = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
+const promises_1 = require("fs/promises");
+const axios_1 = __importDefault(require("axios"));
 /**
  * Resizes the provided canvas/image to the specified dimensions.
  * If only one dimension is specified, the aspect ratio will be locked and the other dimension will be inferred.
@@ -559,6 +573,42 @@ function fromWebp(b) {
     return canvas;
 }
 exports.fromWebp = fromWebp;
+/**
+ * @param b Image buffer
+ * @returns True if the buffer has the .webp file signature
+ */
+function isWebpBuffer(b) {
+    return b.toString('hex', 0, 4) === '52494646' && b.toString('hex', 8, 12) === '57454250';
+}
+exports.isWebpBuffer = isWebpBuffer;
+/**
+ * Loads a remote or local image by URL.
+ * Recreates canvas' image loading, but with .webp support.
+ * @param url Image URL
+ * @returns The loaded image
+ */
+function loadImage2(url) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let buffer;
+        // If the URL is for a remote resource
+        if (url.startsWith('http')) {
+            const response = yield axios_1.default.get(url, { responseType: 'arraybuffer' });
+            buffer = Buffer.from(new Uint8Array(response.data));
+        }
+        // Otherwise, assume it's local
+        else {
+            buffer = yield (0, promises_1.readFile)(url);
+        }
+        // Check if it has a WEBP file signature
+        if (isWebpBuffer(buffer)) {
+            const converted = fromWebp(buffer);
+            return yield (0, canvas_1.loadImage)(converted.toBuffer());
+        }
+        // Otherwise, just load the image as normal
+        return yield (0, canvas_1.loadImage)(buffer);
+    });
+}
+exports.loadImage2 = loadImage2;
 /**
  * Given a source image, skew the bottom of it left and right and/or the right side of it up or down.
  * Expands the canvas to fit the skewed image neatly.

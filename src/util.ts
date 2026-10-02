@@ -1,6 +1,8 @@
-import { Canvas, Image, ImageData as NodeCanvasImageData , createCanvas } from "canvas";
+import { Canvas, Image, ImageData as NodeCanvasImageData , createCanvas, loadImage } from "canvas";
 import { decode as decodeWebp } from '@cwasm/webp';
+import { readFile } from 'fs/promises';
 import { GraphPalette } from "./types";
+import axios from "axios";
 
 /**
  * Resizes the provided canvas/image to the specified dimensions.
@@ -596,6 +598,42 @@ export function fromWebp(b: Buffer): Canvas {
     const imageData = new NodeCanvasImageData(decoded.data, decoded.width, decoded.height);
     c.putImageData(imageData, 0, 0);
     return canvas;
+}
+
+/**
+ * @param b Image buffer
+ * @returns True if the buffer has the .webp file signature
+ */
+export function isWebpBuffer(b: Buffer): boolean {
+    return b.toString('hex', 0, 4) === '52494646' && b.toString('hex', 8, 12) === '57454250';
+}
+
+/**
+ * Loads a remote or local image by URL.
+ * Recreates canvas' image loading, but with .webp support.
+ * @param url Image URL
+ * @returns The loaded image
+ */
+export async function loadImage2(url: string): Promise<Image> {
+    let buffer: Buffer;
+    // If the URL is for a remote resource
+    if (url.startsWith('http')) {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        buffer = Buffer.from(new Uint8Array(response.data as ArrayBuffer));
+    }
+    // Otherwise, assume it's local
+    else {
+        buffer = await readFile(url);
+    }
+
+    // Check if it has a WEBP file signature
+    if (isWebpBuffer(buffer)) {
+        const converted = fromWebp(buffer);
+        return await loadImage(converted.toBuffer());
+    }
+
+    // Otherwise, just load the image as normal
+    return await loadImage(buffer);
 }
 
 /**

@@ -190,6 +190,18 @@ export declare function cropAroundPoints(image: Image | Canvas, points: {
 export declare function cropToSquare(image: Image | Canvas): Canvas;
 export declare function fromWebp(b: Buffer): Canvas;
 /**
+ * @param b Image buffer
+ * @returns True if the buffer has the .webp file signature
+ */
+export declare function isWebpBuffer(b: Buffer): boolean;
+/**
+ * Loads a remote or local image by URL.
+ * Recreates canvas' image loading, but with .webp support.
+ * @param url Image URL
+ * @returns The loaded image
+ */
+export declare function loadImage2(url: string): Promise<Image>;
+/**
  * Given a source image, skew the bottom of it left and right and/or the right side of it up or down.
  * Expands the canvas to fit the skewed image neatly.
  * @param image Source image

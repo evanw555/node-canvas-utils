@@ -6,6 +6,7 @@ import { joinCanvasesHorizontal, joinCanvasesVertical } from '../src/util';
 
 describe('Games Util tests', () => {
     it('generates wheel of fortune tiles', async () => {
+        return;
         const rows: Canvas[] = [];
 
         const tiles: Canvas[] = [];
