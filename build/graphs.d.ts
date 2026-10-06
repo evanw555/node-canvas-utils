@@ -29,4 +29,10 @@ export declare function createBarGraph(entries: {
     palette?: GraphPalette;
     decimalPrecision?: number;
 }): Promise<Canvas>;
+export declare function renderCalendar(date: Date, events: Record<string, Image | Canvas | string>, options?: {
+    title?: string;
+    tileWidth?: number;
+    tileHeight?: number;
+    titleBackground?: Image | Canvas;
+}): Canvas;
 //# sourceMappingURL=graphs.d.ts.map

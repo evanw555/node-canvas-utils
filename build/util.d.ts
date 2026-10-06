@@ -70,6 +70,15 @@ export declare function withMargin(canvas: Canvas | Image, margin: number | {
  */
 export declare function fillBackground(image: Image | Canvas, palette: Pick<GraphPalette, 'background'>): Canvas;
 /**
+ * Given some source image and a background, returns the source image with the background image behind it
+ * and resized so that it fully covers the entire space. If a string is supplied, it will be interpreted
+ * as a color style string, which will be used to fill the background.
+ * @param image Source image
+ * @param background Background image or style string
+ * @returns New canvas containing the image over the desired background
+ */
+export declare function withBackground(image: Image | Canvas, background: Image | Canvas | string): Canvas;
+/**
  * Given some image/canvas, return a canvas of that image/canvas trimmed to a circle.
  * @param image The source image/canvas
  * @param options.alpha Optional alpha value of the returned circle

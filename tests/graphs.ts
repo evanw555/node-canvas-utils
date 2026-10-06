@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { createBarGraph } from '../src/graphs';
+import { createBarGraph, renderCalendar } from '../src/graphs';
 import { joinCanvasesVertical } from '../src/util';
-import { Canvas } from 'canvas';
+import { Canvas, loadImage } from 'canvas';
 import { GraphPalette } from '../src/types';
 import { getTextLabel } from '../src/text';
 
@@ -41,5 +41,19 @@ describe('Graph Util tests', () => {
         const joined = joinCanvasesVertical(graphs);
         fs.writeFileSync('/tmp/node-canvas-utils/createBarGraph.png', joined.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/createBarGraph.png')).is.true;
+    });
+
+    it('can render a calendar...', async () => {
+        const calendar = renderCalendar(new Date(), {
+            '15': await loadImage('assets/leaf.png'),
+            '22': 'Bob\'s Birthday',
+            '10/31': 'Halloween'
+        }, {
+            title: 'October 2026',
+            titleBackground: await loadImage('assets/prestonpresents.png')
+        });
+
+        fs.writeFileSync('/tmp/node-canvas-utils/renderCalendar.png', calendar.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/renderCalendar.png')).is.true;
     });
 })

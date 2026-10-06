@@ -1,8 +1,8 @@
-import canvas, { Canvas, Image } from 'canvas';
+import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
-import { getTextLabel } from './text';
-import { fillBackground, joinCanvasesVertical } from './util';
+import { getTextBox, getTextLabel } from './text';
+import { crop, fillBackground, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -125,4 +125,83 @@ export async function createBarGraph(entries: { name: string, value: number, ico
 
     // Return all components joined with a background
     return fillBackground(joinCanvasesVertical(canvases), PALETTE);
+}
+
+export function renderCalendar(date: Date, events: Record<string, Image | Canvas | string>, options?: { title?: string, tileWidth?: number, tileHeight?: number, titleBackground?: Image | Canvas }): Canvas {
+    const TILE_WIDTH = options?.tileWidth ?? 160;
+    const TILE_HEIGHT = options?.tileHeight ?? 120;
+
+    const firstDay = new Date(date);
+    firstDay.setDate(1);
+    const endOn = new Date(firstDay);
+    endOn.setMonth(endOn.getMonth() + 1);
+    const month = date.getMonth();
+    const tiles: Canvas[] = [];
+    const current = new Date(firstDay);
+    current.setDate(current.getDate() - current.getDay());
+    while (current.toDateString() !== endOn.toDateString() && current.getTime() < endOn.getTime()) {
+        const tile = createCanvas(TILE_WIDTH, TILE_HEIGHT);
+        const c = tile.getContext('2d');
+
+        c.fillStyle = 'white';
+        c.fillRect(0, 0, tile.width, tile.height);
+        c.strokeStyle = 'black';
+        c.lineWidth = 5;
+        c.strokeRect(0, 0, tile.width, tile.height);
+
+        let overlay: Image | Canvas | undefined;
+
+        if (current.getMonth() === month) {
+            // Draw DOTM
+            c.drawImage(getTextLabel(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), 5, 5);
+
+            // Draw any events for this day
+            const event: Image | Canvas | string | undefined = events[current.getDate().toString()] ?? events[`${month + 1}/${current.getDate().toString()}`];
+            if (event) {
+                // If it's an image to be drawn
+                if (event instanceof Image || event instanceof Canvas) {
+                    overlay = event;
+                    // c.drawImage(event, Math.round((tile.width - event.width) / 2), Math.round((tile.height - event.height) / 2));
+                }
+                // If it's a string
+                else if (typeof event === 'string') {
+                    overlay = getTextBox(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
+                }
+            }
+
+            // Cross the day off if it's in the past
+            if (current.getDate() < date.getDate()) {
+                c.strokeStyle = 'rgba(255,0,0,0.5)';
+                c.beginPath();
+                c.moveTo(0, 0);
+                c.lineTo(tile.width, tile.height);
+                c.moveTo(tile.width, 0);
+                c.lineTo(0, tile.height);
+                c.stroke();
+            }
+        }
+
+        if (overlay) {
+            const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
+            tiles.push(superimpose([
+                tile,
+                resize(overlay, { width: overlay.width * scale, height: overlay.height * scale })
+            ]));
+        } else {
+            tiles.push(tile);
+        }
+
+        current.setDate(current.getDate() + 1);
+    }
+
+    const grid = joinCanvasesAsEvenGrid(tiles, { columns: 7 });
+
+    let title = withOutline(getTextLabel(options?.title ?? `Month ${month.toString()}`, { width: grid.width, height: TILE_HEIGHT, style: 'white' }), { style: 'black', thickness: 5 });
+
+    const tbg = options?.titleBackground;
+    if (tbg) {
+        title = withBackground(title, tbg);
+    }
+
+    return fillBackground(joinCanvasesVertical([title, grid], { align: 'center' }), { background: 'white' });
 }

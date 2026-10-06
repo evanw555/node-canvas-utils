@@ -253,6 +253,29 @@ export function fillBackground(image: Image | Canvas, palette: Pick<GraphPalette
 }
 
 /**
+ * Given some source image and a background, returns the source image with the background image behind it
+ * and resized so that it fully covers the entire space. If a string is supplied, it will be interpreted
+ * as a color style string, which will be used to fill the background.
+ * @param image Source image
+ * @param background Background image or style string
+ * @returns New canvas containing the image over the desired background
+ */
+export function withBackground(image: Image | Canvas, background: Image | Canvas | string): Canvas {
+    // If the background is just a style string, return the image with a filled background
+    if (typeof background === 'string') {
+        return fillBackground(image, { background });
+    }
+
+    // Resize the background to fully cover the image
+    const scale = Math.max(image.width / background.width, image.height / background.height);
+    const resizedBackground = resize(background, { width: Math.round(background.width * scale), height: Math.round(background.height * scale) });
+    const croppedBackground = crop(resizedBackground, { width: image.width, height: image.height, horizontal: 'center', vertical: 'center' });
+
+    // Return the image over this background
+    return superimpose([croppedBackground, image]);
+}
+
+/**
  * Given some image/canvas, return a canvas of that image/canvas trimmed to a circle.
  * @param image The source image/canvas
  * @param options.alpha Optional alpha value of the returned circle

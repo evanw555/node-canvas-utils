@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,12 +31,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBarGraph = void 0;
-const canvas_1 = __importDefault(require("canvas"));
+exports.renderCalendar = exports.createBarGraph = void 0;
+const canvas_1 = __importStar(require("canvas"));
 const constants_1 = require("./constants");
 const text_1 = require("./text");
 const util_1 = require("./util");
@@ -135,4 +155,73 @@ function createBarGraph(entries, options) {
     });
 }
 exports.createBarGraph = createBarGraph;
+function renderCalendar(date, events, options) {
+    var _a, _b, _c, _d;
+    const TILE_WIDTH = (_a = options === null || options === void 0 ? void 0 : options.tileWidth) !== null && _a !== void 0 ? _a : 160;
+    const TILE_HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.tileHeight) !== null && _b !== void 0 ? _b : 120;
+    const firstDay = new Date(date);
+    firstDay.setDate(1);
+    const endOn = new Date(firstDay);
+    endOn.setMonth(endOn.getMonth() + 1);
+    const month = date.getMonth();
+    const tiles = [];
+    const current = new Date(firstDay);
+    current.setDate(current.getDate() - current.getDay());
+    while (current.toDateString() !== endOn.toDateString() && current.getTime() < endOn.getTime()) {
+        const tile = (0, canvas_1.createCanvas)(TILE_WIDTH, TILE_HEIGHT);
+        const c = tile.getContext('2d');
+        c.fillStyle = 'white';
+        c.fillRect(0, 0, tile.width, tile.height);
+        c.strokeStyle = 'black';
+        c.lineWidth = 5;
+        c.strokeRect(0, 0, tile.width, tile.height);
+        let overlay;
+        if (current.getMonth() === month) {
+            // Draw DOTM
+            c.drawImage((0, text_1.getTextLabel)(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), 5, 5);
+            // Draw any events for this day
+            const event = (_c = events[current.getDate().toString()]) !== null && _c !== void 0 ? _c : events[`${month + 1}/${current.getDate().toString()}`];
+            if (event) {
+                // If it's an image to be drawn
+                if (event instanceof canvas_1.Image || event instanceof canvas_1.Canvas) {
+                    overlay = event;
+                    // c.drawImage(event, Math.round((tile.width - event.width) / 2), Math.round((tile.height - event.height) / 2));
+                }
+                // If it's a string
+                else if (typeof event === 'string') {
+                    overlay = (0, text_1.getTextBox)(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
+                }
+            }
+            // Cross the day off if it's in the past
+            if (current.getDate() < date.getDate()) {
+                c.strokeStyle = 'rgba(255,0,0,0.5)';
+                c.beginPath();
+                c.moveTo(0, 0);
+                c.lineTo(tile.width, tile.height);
+                c.moveTo(tile.width, 0);
+                c.lineTo(0, tile.height);
+                c.stroke();
+            }
+        }
+        if (overlay) {
+            const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
+            tiles.push((0, util_1.superimpose)([
+                tile,
+                (0, util_1.resize)(overlay, { width: overlay.width * scale, height: overlay.height * scale })
+            ]));
+        }
+        else {
+            tiles.push(tile);
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    const grid = (0, util_1.joinCanvasesAsEvenGrid)(tiles, { columns: 7 });
+    let title = (0, util_1.withOutline)((0, text_1.getTextLabel)((_d = options === null || options === void 0 ? void 0 : options.title) !== null && _d !== void 0 ? _d : `Month ${month.toString()}`, { width: grid.width, height: TILE_HEIGHT, style: 'white' }), { style: 'black', thickness: 5 });
+    const tbg = options === null || options === void 0 ? void 0 : options.titleBackground;
+    if (tbg) {
+        title = (0, util_1.withBackground)(title, tbg);
+    }
+    return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)([title, grid], { align: 'center' }), { background: 'white' });
+}
+exports.renderCalendar = renderCalendar;
 //# sourceMappingURL=graphs.js.map
