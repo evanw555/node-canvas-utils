@@ -127,7 +127,7 @@ export async function createBarGraph(entries: { name: string, value: number, ico
     return fillBackground(joinCanvasesVertical(canvases), PALETTE);
 }
 
-export function renderCalendar(date: Date, events: Record<string, Image | Canvas | string>, options?: { title?: string, tileWidth?: number, tileHeight?: number, titleBackground?: Image | Canvas }): Canvas {
+export function renderCalendar(date: Date, events: Record<string, { background?: Image | Canvas, foreground?: Image | Canvas, text?: string }>, options?: { title?: string, tileWidth?: number, tileHeight?: number, titleBackground?: Image | Canvas }): Canvas {
     const TILE_WIDTH = options?.tileWidth ?? 160;
     const TILE_HEIGHT = options?.tileHeight ?? 120;
 
@@ -148,28 +148,41 @@ export function renderCalendar(date: Date, events: Record<string, Image | Canvas
 
         if (current.getMonth() === month) {
             // Draw any events for this day
-            const event: Image | Canvas | string | undefined = events[current.getDate().toString()] ?? events[`${month + 1}/${current.getDate().toString()}`];
-            if (event) {
-                let overlay: Image | Canvas | undefined;
-                // If it's an image to be drawn
-                if (event instanceof Image || event instanceof Canvas) {
-                    overlay = event;
-                    // c.drawImage(event, Math.round((tile.width - event.width) / 2), Math.round((tile.height - event.height) / 2));
-                }
-                // If it's a string
-                else if (typeof event === 'string') {
-                    overlay = getTextBox(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
-                }
-                if (overlay) {
-                    const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
-                    const scaled = resize(overlay, { width: overlay.width * scale, height: overlay.height * scale });
-                    c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
-                }
+            const event = events[current.getDate().toString()] ?? events[`${month + 1}/${current.getDate().toString()}`];
+
+            // Draw background first
+            if (event && event.background) {
+                const image = event.background;
+                // Stretch so that it covers everything
+                const scale = Math.max(tile.width / image.width, tile.height / image.height);
+                const scaled = resize(image, { width: image.width * scale, height: image.height * scale });
+                c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
+            }
+
+            // Draw foreground
+            if (event && event.foreground) {
+                const image = event.foreground;
+                // Squeeze so that it fits inside
+                const scale = Math.min(tile.width / image.width, tile.height / image.height);
+                const scaled = resize(image, { width: image.width * scale, height: image.height * scale });
+                c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
             }
 
             // Draw DOTM
             const dotm = withOutline(getTextLabel(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), { expandCanvas: true, thickness: Math.round(tile.height / 60), style: '#f1f1f1' });
             c.drawImage(dotm, 5, 5);
+
+            // Draw text overlay
+            if (event && event.text) {
+                const text = event.text;
+                const height = Math.round(tile.height / (3 + (text.length / 15)))
+                const image = getTextBox(text, tile.width - 10, height, { font: `bold ${Math.round(0.85 * height)}px sans-serif`, style: 'black' });
+                // Squeeze so that it fits inside
+                const scale = Math.min((tile.width - 10) / image.width, (tile.height - 10) / image.height);
+                const scaled = resize(image, { width: image.width * scale, height: image.height * scale });
+                const outlined = withOutline(scaled, { expandCanvas: true, thickness: Math.round(tile.height / 90), style: '#f1f1f1' });
+                c.drawImage(outlined, Math.round((tile.width - outlined.width) / 2), Math.round((tile.height - outlined.height) / 2));
+            }
 
             // Cross the day off if it's in the past
             if (current.getDate() < date.getDate()) {

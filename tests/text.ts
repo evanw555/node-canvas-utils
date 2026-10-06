@@ -8,10 +8,10 @@ const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitu
 
 describe('Text Util tests', () => {
     it('generates text labels', () => {
-        const textBox = fillBackground(getTextLabel('Hello, World!', { width: 128, height: 20 }), { background: 'gray' });
+        const textBox = fillBackground(getTextLabel('Hello, World!', { width: 256, height: 40 }), { background: 'gray' });
         fs.writeFileSync('/tmp/node-canvas-utils/getTextLabel.png', textBox.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/getTextLabel.png')).is.true;
-        const textBoxAutoWidth = fillBackground(getTextLabel('Hello, World! Please adjust to the correct width please please', { height: 20 }), { background: 'gray' });
+        const textBoxAutoWidth = fillBackground(getTextLabel('Hello, World! Please adjust to the correct width please please', { height: 40 }), { background: 'gray' });
         fs.writeFileSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png', textBoxAutoWidth.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png')).is.true;
     });

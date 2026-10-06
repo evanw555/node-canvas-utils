@@ -45,10 +45,12 @@ describe('Graph Util tests', () => {
 
     it('can render a calendar...', async () => {
         const calendar = renderCalendar(new Date(), {
-            '15': await loadImage('assets/leaf.png'),
-            '5': crop(await loadImage('assets/prestonpresents.png'), { width: 160, height: 120 }),
-            '22': 'Bob\'s Birthday',
-            '10/31': 'Halloween'
+            '15': { background: await loadImage('assets/sample.png'), foreground: await loadImage('assets/leaf.png') },
+            '5': { text: 'Preston Presents...', background: (await loadImage('assets/prestonpresents.png')) },
+            '22': { text: 'Bob\'s Birthday' },
+            '23': { text: 'G3: Garret\'s Ghastly Gathering @6:00PM' },
+            '24': { text: 'Bob had a grand crashout and puked all over someone\'s car and the rest was history' },
+            '10/31': { text: 'Halloween' }
         }, {
             title: 'October 2026',
             titleBackground: await loadImage('assets/prestonpresents.png')

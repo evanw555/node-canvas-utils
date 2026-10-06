@@ -29,7 +29,11 @@ export declare function createBarGraph(entries: {
     palette?: GraphPalette;
     decimalPrecision?: number;
 }): Promise<Canvas>;
-export declare function renderCalendar(date: Date, events: Record<string, Image | Canvas | string>, options?: {
+export declare function renderCalendar(date: Date, events: Record<string, {
+    background?: Image | Canvas;
+    foreground?: Image | Canvas;
+    text?: string;
+}>, options?: {
     title?: string;
     tileWidth?: number;
     tileHeight?: number;

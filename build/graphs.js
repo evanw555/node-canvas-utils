@@ -175,26 +175,36 @@ function renderCalendar(date, events, options) {
         if (current.getMonth() === month) {
             // Draw any events for this day
             const event = (_c = events[current.getDate().toString()]) !== null && _c !== void 0 ? _c : events[`${month + 1}/${current.getDate().toString()}`];
-            if (event) {
-                let overlay;
-                // If it's an image to be drawn
-                if (event instanceof canvas_1.Image || event instanceof canvas_1.Canvas) {
-                    overlay = event;
-                    // c.drawImage(event, Math.round((tile.width - event.width) / 2), Math.round((tile.height - event.height) / 2));
-                }
-                // If it's a string
-                else if (typeof event === 'string') {
-                    overlay = (0, text_1.getTextBox)(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
-                }
-                if (overlay) {
-                    const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
-                    const scaled = (0, util_1.resize)(overlay, { width: overlay.width * scale, height: overlay.height * scale });
-                    c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
-                }
+            // Draw background first
+            if (event && event.background) {
+                const image = event.background;
+                // Stretch so that it covers everything
+                const scale = Math.max(tile.width / image.width, tile.height / image.height);
+                const scaled = (0, util_1.resize)(image, { width: image.width * scale, height: image.height * scale });
+                c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
+            }
+            // Draw foreground
+            if (event && event.foreground) {
+                const image = event.foreground;
+                // Squeeze so that it fits inside
+                const scale = Math.min(tile.width / image.width, tile.height / image.height);
+                const scaled = (0, util_1.resize)(image, { width: image.width * scale, height: image.height * scale });
+                c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
             }
             // Draw DOTM
             const dotm = (0, util_1.withOutline)((0, text_1.getTextLabel)(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), { expandCanvas: true, thickness: Math.round(tile.height / 60), style: '#f1f1f1' });
             c.drawImage(dotm, 5, 5);
+            // Draw text overlay
+            if (event && event.text) {
+                const text = event.text;
+                const height = Math.round(tile.height / (3 + (text.length / 15)));
+                const image = (0, text_1.getTextBox)(text, tile.width - 10, height, { font: `bold ${Math.round(0.85 * height)}px sans-serif`, style: 'black' });
+                // Squeeze so that it fits inside
+                const scale = Math.min((tile.width - 10) / image.width, (tile.height - 10) / image.height);
+                const scaled = (0, util_1.resize)(image, { width: image.width * scale, height: image.height * scale });
+                const outlined = (0, util_1.withOutline)(scaled, { expandCanvas: true, thickness: Math.round(tile.height / 90), style: '#f1f1f1' });
+                c.drawImage(outlined, Math.round((tile.width - outlined.width) / 2), Math.round((tile.height - outlined.height) / 2));
+            }
             // Cross the day off if it's in the past
             if (current.getDate() < date.getDate()) {
                 c.strokeStyle = 'rgba(255,0,0,0.5)';
