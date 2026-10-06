@@ -346,20 +346,21 @@ exports.fillWithMask = fillWithMask;
  * Given a source image, return a new canvas with a drop shadow added to all visible parts of the source image.
  * @param image Source image
  * @param options.expandCanvas If true, a margin will be added on all sides to ensure the drop shadow fits. Else, the dimensions will remain the same.
- * @param options.alpha The opacity of the drop shadow (default 0.5)
+ * @param options.style The style of the shadow itself, overrides the alpha option (default is black with 0.5 alpha)
+ * @param options.alpha The opacity of the drop shadow, overridden by the style option (default 0.5)
  * @param options.angle The angle (in radians) of the drop shadow (default southeast)
  * @param options.distance the distance (in pixels) of the drop shadow (default 3)
  * @returns New canvas including the source image with an added drop shadow
  */
 function withDropShadow(image, options) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     // We can draw a drop shadow by basically drawing an outline with the lowest quality possible
     return withOutline(image, {
         expandCanvas: (_a = options === null || options === void 0 ? void 0 : options.expandCanvas) !== null && _a !== void 0 ? _a : false,
-        style: `rgba(0,0,0,${(_b = options === null || options === void 0 ? void 0 : options.alpha) !== null && _b !== void 0 ? _b : 0.5})`,
-        thickness: (_c = options === null || options === void 0 ? void 0 : options.distance) !== null && _c !== void 0 ? _c : 3,
+        style: (_b = options === null || options === void 0 ? void 0 : options.style) !== null && _b !== void 0 ? _b : `rgba(0,0,0,${(_c = options === null || options === void 0 ? void 0 : options.alpha) !== null && _c !== void 0 ? _c : 0.5})`,
+        thickness: (_d = options === null || options === void 0 ? void 0 : options.distance) !== null && _d !== void 0 ? _d : 3,
         quality: 1,
-        initialAngle: (_d = options === null || options === void 0 ? void 0 : options.alpha) !== null && _d !== void 0 ? _d : (Math.PI * 1.75)
+        initialAngle: (_e = options === null || options === void 0 ? void 0 : options.angle) !== null && _e !== void 0 ? _e : (Math.PI * 1.75)
     });
 }
 exports.withDropShadow = withDropShadow;

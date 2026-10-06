@@ -362,19 +362,20 @@ export function fillWithMask(style: string, mask: Canvas | Image): Canvas {
  * Given a source image, return a new canvas with a drop shadow added to all visible parts of the source image.
  * @param image Source image
  * @param options.expandCanvas If true, a margin will be added on all sides to ensure the drop shadow fits. Else, the dimensions will remain the same.
- * @param options.alpha The opacity of the drop shadow (default 0.5)
+ * @param options.style The style of the shadow itself, overrides the alpha option (default is black with 0.5 alpha)
+ * @param options.alpha The opacity of the drop shadow, overridden by the style option (default 0.5)
  * @param options.angle The angle (in radians) of the drop shadow (default southeast)
  * @param options.distance the distance (in pixels) of the drop shadow (default 3)
  * @returns New canvas including the source image with an added drop shadow
  */
-export function withDropShadow(image: Canvas | Image, options?: { expandCanvas?: boolean, alpha?: number, angle?: number, distance?: number }): Canvas {
+export function withDropShadow(image: Canvas | Image, options?: { expandCanvas?: boolean, style?: string, alpha?: number, angle?: number, distance?: number }): Canvas {
     // We can draw a drop shadow by basically drawing an outline with the lowest quality possible
     return withOutline(image, {
         expandCanvas: options?.expandCanvas ?? false,
-        style: `rgba(0,0,0,${options?.alpha ?? 0.5})`,
+        style: options?.style ?? `rgba(0,0,0,${options?.alpha ?? 0.5})`,
         thickness: options?.distance ?? 3,
         quality: 1,
-        initialAngle: options?.alpha ?? (Math.PI * 1.75)
+        initialAngle: options?.angle ?? (Math.PI * 1.75)
     });
 }
 
