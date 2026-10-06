@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { expect } from 'chai';
 import { createBarGraph, renderCalendar } from '../src/graphs';
-import { joinCanvasesVertical } from '../src/util';
+import { crop, joinCanvasesVertical } from '../src/util';
 import { Canvas, loadImage } from 'canvas';
 import { GraphPalette } from '../src/types';
 import { getTextLabel } from '../src/text';
@@ -46,6 +46,7 @@ describe('Graph Util tests', () => {
     it('can render a calendar...', async () => {
         const calendar = renderCalendar(new Date(), {
             '15': await loadImage('assets/leaf.png'),
+            '5': crop(await loadImage('assets/prestonpresents.png'), { width: 160, height: 120 }),
             '22': 'Bob\'s Birthday',
             '10/31': 'Halloween'
         }, {

@@ -170,18 +170,13 @@ function renderCalendar(date, events, options) {
     while (current.toDateString() !== endOn.toDateString() && current.getTime() < endOn.getTime()) {
         const tile = (0, canvas_1.createCanvas)(TILE_WIDTH, TILE_HEIGHT);
         const c = tile.getContext('2d');
-        c.fillStyle = 'white';
+        c.fillStyle = '#f1f1f1';
         c.fillRect(0, 0, tile.width, tile.height);
-        c.strokeStyle = 'black';
-        c.lineWidth = 5;
-        c.strokeRect(0, 0, tile.width, tile.height);
-        let overlay;
         if (current.getMonth() === month) {
-            // Draw DOTM
-            c.drawImage((0, text_1.getTextLabel)(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), 5, 5);
             // Draw any events for this day
             const event = (_c = events[current.getDate().toString()]) !== null && _c !== void 0 ? _c : events[`${month + 1}/${current.getDate().toString()}`];
             if (event) {
+                let overlay;
                 // If it's an image to be drawn
                 if (event instanceof canvas_1.Image || event instanceof canvas_1.Canvas) {
                     overlay = event;
@@ -191,10 +186,20 @@ function renderCalendar(date, events, options) {
                 else if (typeof event === 'string') {
                     overlay = (0, text_1.getTextBox)(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
                 }
+                if (overlay) {
+                    const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
+                    const scaled = (0, util_1.resize)(overlay, { width: overlay.width * scale, height: overlay.height * scale });
+                    c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
+                }
             }
+            // Draw DOTM
+            const dotm = (0, util_1.withOutline)((0, text_1.getTextLabel)(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), { expandCanvas: true, thickness: Math.round(tile.height / 60), style: '#f1f1f1' });
+            c.drawImage(dotm, 5, 5);
             // Cross the day off if it's in the past
             if (current.getDate() < date.getDate()) {
                 c.strokeStyle = 'rgba(255,0,0,0.5)';
+                c.lineWidth = 8;
+                c.setLineDash([]);
                 c.beginPath();
                 c.moveTo(0, 0);
                 c.lineTo(tile.width, tile.height);
@@ -203,16 +208,12 @@ function renderCalendar(date, events, options) {
                 c.stroke();
             }
         }
-        if (overlay) {
-            const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
-            tiles.push((0, util_1.superimpose)([
-                tile,
-                (0, util_1.resize)(overlay, { width: overlay.width * scale, height: overlay.height * scale })
-            ]));
-        }
-        else {
-            tiles.push(tile);
-        }
+        // Draw the border last to frame everything
+        c.strokeStyle = 'black';
+        c.lineWidth = 5;
+        c.setLineDash([]);
+        c.strokeRect(0, 0, tile.width, tile.height);
+        tiles.push(tile);
         current.setDate(current.getDate() + 1);
     }
     const grid = (0, util_1.joinCanvasesAsEvenGrid)(tiles, { columns: 7 });

@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withOutline } from './util';
+import { crop, fillBackground, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withDropShadow, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -143,21 +143,14 @@ export function renderCalendar(date: Date, events: Record<string, Image | Canvas
         const tile = createCanvas(TILE_WIDTH, TILE_HEIGHT);
         const c = tile.getContext('2d');
 
-        c.fillStyle = 'white';
+        c.fillStyle = '#f1f1f1';
         c.fillRect(0, 0, tile.width, tile.height);
-        c.strokeStyle = 'black';
-        c.lineWidth = 5;
-        c.strokeRect(0, 0, tile.width, tile.height);
-
-        let overlay: Image | Canvas | undefined;
 
         if (current.getMonth() === month) {
-            // Draw DOTM
-            c.drawImage(getTextLabel(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), 5, 5);
-
             // Draw any events for this day
             const event: Image | Canvas | string | undefined = events[current.getDate().toString()] ?? events[`${month + 1}/${current.getDate().toString()}`];
             if (event) {
+                let overlay: Image | Canvas | undefined;
                 // If it's an image to be drawn
                 if (event instanceof Image || event instanceof Canvas) {
                     overlay = event;
@@ -167,11 +160,22 @@ export function renderCalendar(date: Date, events: Record<string, Image | Canvas
                 else if (typeof event === 'string') {
                     overlay = getTextBox(event, tile.width - 10, Math.round(tile.height / 5), { font: `${Math.round(tile.height / 6)}px sans-serif`, style: 'black' });
                 }
+                if (overlay) {
+                    const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
+                    const scaled = resize(overlay, { width: overlay.width * scale, height: overlay.height * scale });
+                    c.drawImage(scaled, Math.round((tile.width - scaled.width) / 2), Math.round((tile.height - scaled.height) / 2));
+                }
             }
+
+            // Draw DOTM
+            const dotm = withOutline(getTextLabel(current.getDate().toString(), { height: tile.height / 5, font: `bold ${Math.round(tile.height / 5)}px sans-serif`, style: 'black' }), { expandCanvas: true, thickness: Math.round(tile.height / 60), style: '#f1f1f1' });
+            c.drawImage(dotm, 5, 5);
 
             // Cross the day off if it's in the past
             if (current.getDate() < date.getDate()) {
                 c.strokeStyle = 'rgba(255,0,0,0.5)';
+                c.lineWidth = 8;
+                c.setLineDash([]);
                 c.beginPath();
                 c.moveTo(0, 0);
                 c.lineTo(tile.width, tile.height);
@@ -181,15 +185,13 @@ export function renderCalendar(date: Date, events: Record<string, Image | Canvas
             }
         }
 
-        if (overlay) {
-            const scale = Math.min(tile.width / overlay.width, tile.height / overlay.height);
-            tiles.push(superimpose([
-                tile,
-                resize(overlay, { width: overlay.width * scale, height: overlay.height * scale })
-            ]));
-        } else {
-            tiles.push(tile);
-        }
+        // Draw the border last to frame everything
+        c.strokeStyle = 'black';
+        c.lineWidth = 5;
+        c.setLineDash([]);
+        c.strokeRect(0, 0, tile.width, tile.height);
+
+        tiles.push(tile);
 
         current.setDate(current.getDate() + 1);
     }
