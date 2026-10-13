@@ -232,7 +232,21 @@ function renderCalendar(date, events, options) {
     if (tbg) {
         title = (0, util_1.withBackground)(title, tbg);
     }
-    return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)([title, grid], { align: 'center' }), { background: 'white' });
+    const canvases = [title, grid];
+    // Add footer if specified
+    if (options === null || options === void 0 ? void 0 : options.footer) {
+        if (tbg) {
+            canvases.push((0, util_1.withBackground)((0, util_1.withOutline)((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { width: grid.width, height: TILE_HEIGHT / 4, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'white', align: 'center' }), { style: 'black', thickness: 3 }), tbg));
+        }
+        else {
+            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' }));
+        }
+        let footer = (0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' });
+        if (tbg) {
+            footer = (0, util_1.withBackground)((0, util_1.withOutline)(footer, { style: 'black', thickness: 5 }), tbg);
+        }
+    }
+    return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)(canvases, { align: 'center' }), { background: 'white' });
 }
 exports.renderCalendar = renderCalendar;
 function createLineGraph(data, options) {

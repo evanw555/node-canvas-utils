@@ -127,7 +127,7 @@ export async function createBarGraph(entries: { name: string, value: number, ico
     return fillBackground(joinCanvasesVertical(canvases), PALETTE);
 }
 
-export function renderCalendar(date: Date, events: Record<string, { background?: Image | Canvas, foreground?: Image | Canvas, text?: string }>, options?: { title?: string, tileWidth?: number, tileHeight?: number, titleBackground?: Image | Canvas }): Canvas {
+export function renderCalendar(date: Date, events: Record<string, { background?: Image | Canvas, foreground?: Image | Canvas, text?: string }>, options?: { title?: string, tileWidth?: number, tileHeight?: number, titleBackground?: Image | Canvas, footer?: string }): Canvas {
     const TILE_WIDTH = options?.tileWidth ?? 160;
     const TILE_HEIGHT = options?.tileHeight ?? 120;
 
@@ -218,7 +218,22 @@ export function renderCalendar(date: Date, events: Record<string, { background?:
         title = withBackground(title, tbg);
     }
 
-    return fillBackground(joinCanvasesVertical([title, grid], { align: 'center' }), { background: 'white' });
+    const canvases: Canvas[] = [title, grid];
+
+    // Add footer if specified
+    if (options?.footer) {
+        if (tbg) {
+            canvases.push(withBackground(withOutline(getTextLabel(options?.footer, { width: grid.width, height: TILE_HEIGHT / 4, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'white', align: 'center' }), { style: 'black', thickness: 3 }), tbg));
+        } else {
+            canvases.push(getTextLabel(options?.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' }));
+        }
+        let footer = getTextLabel(options?.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' });
+        if (tbg) {
+            footer = withBackground(withOutline(footer, { style: 'black', thickness: 5 }), tbg);
+        }
+    }
+
+    return fillBackground(joinCanvasesVertical(canvases, { align: 'center' }), { background: 'white' });
 }
 
 interface LineGraphAxisOptions {

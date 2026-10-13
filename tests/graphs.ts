@@ -53,7 +53,8 @@ describe('Graph Util tests', () => {
             '10/31': { text: 'Halloween' }
         }, {
             title: 'October 2026',
-            titleBackground: await loadImage('assets/prestonpresents.png')
+            titleBackground: await loadImage('assets/prestonpresents.png'),
+            footer: 'This is a test calendar - Please say hello, world - Do not read this'
         });
 
         fs.writeFileSync('/tmp/node-canvas-utils/renderCalendar.png', calendar.toBuffer());

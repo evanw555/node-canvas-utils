@@ -38,6 +38,7 @@ export declare function renderCalendar(date: Date, events: Record<string, {
     tileWidth?: number;
     tileHeight?: number;
     titleBackground?: Image | Canvas;
+    footer?: string;
 }): Canvas;
 interface LineGraphAxisOptions {
     label?: string;
