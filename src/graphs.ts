@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withDropShadow, withOutline } from './util';
+import { crop, fillBackground, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -221,19 +221,32 @@ export function renderCalendar(date: Date, events: Record<string, { background?:
     return fillBackground(joinCanvasesVertical([title, grid], { align: 'center' }), { background: 'white' });
 }
 
-export async function createLineGraph(data: { x: number, y: number }[], options?: { gridX?: number, gridY?: number }): Promise<Canvas> {
+interface LineGraphAxisOptions {
+    label?: string,
+    scale?: number,
+    min?: number,
+    max?: number,
+    stringify?: (value: number) => string
+}
+
+export async function createLineGraph(data: { x: number, y: number }[], options?: { title?: string, x?: LineGraphAxisOptions, y?: LineGraphAxisOptions, showMin?: boolean, showMax?: boolean }): Promise<Canvas> {
     const WIDTH = 640;
     const HEIGHT = 480;
 
-    const title = withDropShadow(getTextLabel('TITLE', { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
+    const TITLE = options?.title ?? 'Line Graph';
+    const title = withDropShadow(getTextLabel(TITLE, { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
 
-    const xLabel = withDropShadow(getTextLabel('X SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
-    const yLabel = withDropShadow(getTextLabel('Y SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+    const xAxisName = options?.x?.label ?? 'X Axis';
+    const xLabel = withDropShadow(getTextLabel(xAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+
+    const yAxisName = options?.y?.label ?? 'Y Axis';
+    const yLabel = withDropShadow(getTextLabel(yAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
     const rotatedYLabel = getRotated(yLabel, 3 * Math.PI / 2);
 
     // Render the data
-    const DATA_WIDTH = WIDTH - rotatedYLabel.width;
-    const DATA_HEIGHT = HEIGHT - title.height - xLabel.height;
+    const BORDER_WIDTH = 2;
+    const DATA_WIDTH = WIDTH - rotatedYLabel.width - 2 * BORDER_WIDTH;
+    const DATA_HEIGHT = HEIGHT - title.height - xLabel.height - 2 * BORDER_WIDTH;
     const canvas = createCanvas(DATA_WIDTH, DATA_HEIGHT);
     const c = canvas.getContext('2d');
 
@@ -244,17 +257,23 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
     const minX = Math.min(...sortedData.map(d => d.x));
     const maxX = Math.max(...sortedData.map(d => d.x));
     const xRange = maxX - minX;
-    const minY = Math.min(...sortedData.map(d => d.y));
-    const maxY = Math.max(...sortedData.map(d => d.y));
+    const realMinY = Math.min(...sortedData.map(d => d.y));
+    const realMaxY = Math.max(...sortedData.map(d => d.y));
+    const realYRange = realMaxY - realMinY;
+    const minY = options?.y?.min ?? (realMinY - 0.15 * realYRange);
+    const maxY = options?.y?.max ?? (realMaxY + 0.075 * realYRange);
     const yRange = maxY - minY;
 
     const toChartX = (x: number) => Math.round(DATA_WIDTH * (x - minX) / xRange);
     const toChartY = (y: number) => Math.round(DATA_HEIGHT - DATA_HEIGHT * (y - minY) / yRange);
 
+    const stringifyX = options?.x?.stringify ?? ((value: number) => value.toString());
+    const stringifyY = options?.y?.stringify ?? ((value: number) => value.toString());
+
     // Draw the grid lines
-    const GRID_X = options?.gridX ?? 1;
-    for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
-        c.strokeStyle = 'gray';
+    const X_SCALE = options?.x?.scale ?? 1;
+    for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
+        c.strokeStyle = 'lightgray';
         c.lineWidth = 2;
         c.setLineDash([]);
         c.beginPath();
@@ -262,9 +281,9 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
         c.lineTo(toChartX(x), DATA_HEIGHT);
         c.stroke();
     }
-    const GRID_Y = options?.gridY ?? 1;
-    for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
-        c.strokeStyle = 'gray';
+    const Y_SCALE = options?.y?.scale ?? 1;
+    for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
+        c.strokeStyle = 'lightgray';
         c.lineWidth = 2;
         c.setLineDash([]);
         c.beginPath();
@@ -273,31 +292,79 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
         c.stroke();
     }
 
-    // Draw the grid line labels
-    for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
-        const label = getTextLabel(x.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
-        c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
-    }
-    for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
-        const label = getTextLabel(y.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
-        c.drawImage(label, 0, toChartY(y) - label.height / 2);
-    }
-
+    // Draw the data line
     c.strokeStyle = 'blue';
     c.lineWidth = 3;
     c.setLineDash([]);
     c.beginPath();
     for (const {x, y} of sortedData) {
         c.lineTo(toChartX(x), toChartY(y));
-        console.log(`Line to ${toChartX(x)}, ${toChartY(y)}`);
     }
     c.stroke();
+
+    // Draw the axis scale labels
+    const SCALE_HEIGHT = Math.round(HEIGHT / 24);
+    for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
+        const label = withBackground(getTextLabel(stringifyX(x), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
+        c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
+    }
+    let maxScaleWidth = 0;
+    for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
+        const label = withBackground(getTextLabel(stringifyY(y), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
+        c.drawImage(label, 0, toChartY(y) - label.height / 2);
+        // Keep track of the widest label on this axis
+        if (label.width > maxScaleWidth) {
+            maxScaleWidth = label.width;
+        }
+    }
+
+    const POINT_LABEL_HEIGHT = Math.round(HEIGHT / 36);
+
+    // Draw the min point
+    if (options?.showMin) {
+        let minPoint: { x: number, y: number } | undefined = undefined;
+        for (const point of data) {
+            const knownMin = minPoint?.y ?? Number.MAX_SAFE_INTEGER;
+            if (point.y < knownMin) {
+                minPoint = point;
+            }
+        }
+        if (minPoint) {
+            const { x, y } = minPoint;
+            // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
+            const text = stringifyY(y);
+            const label = withBackground(getTextLabel(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
+            const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
+            const clampedChartY = Math.min(Math.max(0, toChartY(y) + 4), DATA_HEIGHT - label.height);
+            c.drawImage(label, clampedChartX, clampedChartY);
+        }
+    }
+
+    // Draw the max point
+    if (options?.showMax) {
+        let maxPoint: { x: number, y: number } | undefined = undefined;
+        for (const point of data) {
+            const knownMax = maxPoint?.y ?? Number.MIN_SAFE_INTEGER;
+            if (point.y > knownMax) {
+                maxPoint = point;
+            }
+        }
+        if (maxPoint) {
+            const { x, y } = maxPoint;
+            // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
+            const text = stringifyY(y);
+            const label = withBackground(getTextLabel(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
+            const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
+            const clampedChartY = Math.min(Math.max(0, toChartY(y) - 1.5 * label.height), DATA_HEIGHT - label.height);
+            c.drawImage(label, clampedChartX, clampedChartY);
+        }
+    }
 
     return joinCanvasesVertical([
         title,
         joinCanvasesHorizontal([
             rotatedYLabel,
-            canvas
+            withBorder(canvas, { thickness: BORDER_WIDTH, style: 'lightgray' })
         ], { align: 'center' }),
         xLabel
     ], { align: 'center' });

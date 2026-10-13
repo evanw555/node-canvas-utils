@@ -62,13 +62,27 @@ describe('Graph Util tests', () => {
 
     it('can render line graphs', async () => {
         const data: { x: number, y: number }[] = [];
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 100; i++) {
             data.push({
                 x: i + 1,
-                y: (i / 20) * ((Math.random() - 0.5) * 0.25 + Math.sin(i / 5))
+                y: 5 * Math.cos(i / 10) * ((Math.random() - 0.5) * 0.25 + Math.sin(i / 5))
             });
         }
-        const graph = await createLineGraph(data, { gridX: 10, gridY: 1 });
+        const graph = await createLineGraph(data, {
+            title: 'Test Sine',
+            x: {
+                label: 'Time (seconds)',
+                scale: 20,
+                stringify: (value) => `${Math.floor(value / 60)}m${value % 60}s`
+            },
+            y: {
+                label: 'Volume (dB)',
+                scale: 1,
+                stringify: (value) => value > 0 ? `+${parseFloat(value.toFixed(2)).toString()}` : parseFloat(value.toFixed(2)).toString()
+            },
+            showMin: true,
+            showMax: true
+        });
 
         fs.writeFileSync('/tmp/node-canvas-utils/createLineGraph.png', graph.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/createLineGraph.png')).is.true;
