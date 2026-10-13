@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withDropShadow, withOutline } from './util';
+import { crop, fillBackground, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withDropShadow, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -219,4 +219,86 @@ export function renderCalendar(date: Date, events: Record<string, { background?:
     }
 
     return fillBackground(joinCanvasesVertical([title, grid], { align: 'center' }), { background: 'white' });
+}
+
+export async function createLineGraph(data: { x: number, y: number }[], options?: { gridX?: number, gridY?: number }): Promise<Canvas> {
+    const WIDTH = 640;
+    const HEIGHT = 480;
+
+    const title = withDropShadow(getTextLabel('TITLE', { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
+
+    const xLabel = withDropShadow(getTextLabel('X SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+    const yLabel = withDropShadow(getTextLabel('Y SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+    const rotatedYLabel = getRotated(yLabel, 3 * Math.PI / 2);
+
+    // Render the data
+    const DATA_WIDTH = WIDTH - rotatedYLabel.width;
+    const DATA_HEIGHT = HEIGHT - title.height - xLabel.height;
+    const canvas = createCanvas(DATA_WIDTH, DATA_HEIGHT);
+    const c = canvas.getContext('2d');
+
+    c.fillStyle = 'white';
+    c.fillRect(0, 0, DATA_WIDTH, DATA_HEIGHT);
+
+    const sortedData = data.sort((x, y) => x.x - y.x);
+    const minX = Math.min(...sortedData.map(d => d.x));
+    const maxX = Math.max(...sortedData.map(d => d.x));
+    const xRange = maxX - minX;
+    const minY = Math.min(...sortedData.map(d => d.y));
+    const maxY = Math.max(...sortedData.map(d => d.y));
+    const yRange = maxY - minY;
+
+    const toChartX = (x: number) => Math.round(DATA_WIDTH * (x - minX) / xRange);
+    const toChartY = (y: number) => Math.round(DATA_HEIGHT - DATA_HEIGHT * (y - minY) / yRange);
+
+    // Draw the grid lines
+    const GRID_X = options?.gridX ?? 1;
+    for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
+        c.strokeStyle = 'gray';
+        c.lineWidth = 2;
+        c.setLineDash([]);
+        c.beginPath();
+        c.moveTo(toChartX(x), 0);
+        c.lineTo(toChartX(x), DATA_HEIGHT);
+        c.stroke();
+    }
+    const GRID_Y = options?.gridY ?? 1;
+    for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
+        c.strokeStyle = 'gray';
+        c.lineWidth = 2;
+        c.setLineDash([]);
+        c.beginPath();
+        c.moveTo(0, toChartY(y));
+        c.lineTo(DATA_WIDTH, toChartY(y));
+        c.stroke();
+    }
+
+    // Draw the grid line labels
+    for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
+        const label = getTextLabel(x.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
+        c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
+    }
+    for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
+        const label = getTextLabel(y.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
+        c.drawImage(label, 0, toChartY(y) - label.height / 2);
+    }
+
+    c.strokeStyle = 'blue';
+    c.lineWidth = 3;
+    c.setLineDash([]);
+    c.beginPath();
+    for (const {x, y} of sortedData) {
+        c.lineTo(toChartX(x), toChartY(y));
+        console.log(`Line to ${toChartX(x)}, ${toChartY(y)}`);
+    }
+    c.stroke();
+
+    return joinCanvasesVertical([
+        title,
+        joinCanvasesHorizontal([
+            rotatedYLabel,
+            canvas
+        ], { align: 'center' }),
+        xLabel
+    ], { align: 'center' });
 }

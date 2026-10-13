@@ -434,6 +434,22 @@ export function withOutline(image: Canvas | Image, options?: { expandCanvas?: bo
     return canvas;
 }
 
+export function withBorder(image: Canvas | Image, options?: { thickness?: number, style?: string }): Canvas {
+    const THICKNESS = options?.thickness ?? 3;
+    const STYLE = options?.style ?? 'black';
+
+    const canvas = createCanvas(image.width + 2 * THICKNESS, image.height + 2 * THICKNESS);
+    const c = canvas.getContext('2d');
+
+    c.fillStyle = STYLE;
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.clearRect(THICKNESS, THICKNESS, canvas.width - 2 * THICKNESS, canvas.height - 2 * THICKNESS);
+
+    c.drawImage(image, THICKNESS, THICKNESS);
+
+    return canvas;
+}
+
 /**
  * Given any number of source images, superimpose them onto one another in the order provided (last image will show up on top).
  * All images will be center-aligned and the output canvas will be sized to fit every image at its native resolution.
@@ -506,16 +522,32 @@ export function setHue(image: Image | Canvas, style: string): Canvas {
  * @returns New canvas containing the rotated image
  */
 export function getRotated(image: Image | Canvas, angle: number): Canvas {
-    const canvas = createCanvas(image.width, image.height);
+    // Determine the bounds (four corners) of the rotated image
+    const dx = Math.round(image.width / 2);
+    const dy = Math.round(image.height / 2);
+    const radius = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+    const theta = Math.atan(dy / dx);
+    const corners = [
+        theta - angle,
+        -theta - angle,
+        Math.PI + theta - angle,
+        Math.PI - theta - angle,
+    ];
+
+    // Set the bounds of the new image to fit the rotated corners
+    const WIDTH = Math.round(Math.max(...corners.map(c => 2 * radius * Math.cos(c))));
+    const HEIGHT = Math.round(Math.max(...corners.map(c => 2 * radius * Math.sin(c))));
+
+    const canvas = createCanvas(WIDTH, HEIGHT);
     const context = canvas.getContext('2d');
 
     context.save();
     // Set the origin to the middle of the canvas
-    context.translate(canvas.width / 2,canvas.height / 2);
+    context.translate(canvas.width / 2, canvas.height / 2);
     // Adjust the context space to be rotated
     context.rotate(angle);
     // Draw the rotated image
-    context.drawImage(image, Math.round(-image.width / 2), Math.round(-image.width / 2));
+    context.drawImage(image, Math.round(-image.width / 2), Math.round(-image.height / 2));
     context.restore();
 
     return canvas;

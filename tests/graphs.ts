@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { createBarGraph, renderCalendar } from '../src/graphs';
+import { createBarGraph, createLineGraph, renderCalendar } from '../src/graphs';
 import { crop, joinCanvasesVertical } from '../src/util';
 import { Canvas, loadImage } from 'canvas';
 import { GraphPalette } from '../src/types';
@@ -43,7 +43,7 @@ describe('Graph Util tests', () => {
         expect(fs.existsSync('/tmp/node-canvas-utils/createBarGraph.png')).is.true;
     });
 
-    it('can render a calendar...', async () => {
+    it('can render calendars', async () => {
         const calendar = renderCalendar(new Date(), {
             '15': { background: await loadImage('assets/sample.png'), foreground: await loadImage('assets/leaf.png') },
             '5': { text: 'Preston Presents...', background: (await loadImage('assets/prestonpresents.png')) },
@@ -58,5 +58,19 @@ describe('Graph Util tests', () => {
 
         fs.writeFileSync('/tmp/node-canvas-utils/renderCalendar.png', calendar.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/renderCalendar.png')).is.true;
+    });
+
+    it('can render line graphs', async () => {
+        const data: { x: number, y: number }[] = [];
+        for (let i = 0; i < 80; i++) {
+            data.push({
+                x: i + 1,
+                y: (i / 20) * ((Math.random() - 0.5) * 0.25 + Math.sin(i / 5))
+            });
+        }
+        const graph = await createLineGraph(data, { gridX: 10, gridY: 1 });
+
+        fs.writeFileSync('/tmp/node-canvas-utils/createLineGraph.png', graph.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/createLineGraph.png')).is.true;
     });
 })

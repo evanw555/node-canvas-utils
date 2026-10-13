@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderCalendar = exports.createBarGraph = void 0;
+exports.createLineGraph = exports.renderCalendar = exports.createBarGraph = void 0;
 const canvas_1 = __importStar(require("canvas"));
 const constants_1 = require("./constants");
 const text_1 = require("./text");
@@ -235,4 +235,79 @@ function renderCalendar(date, events, options) {
     return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)([title, grid], { align: 'center' }), { background: 'white' });
 }
 exports.renderCalendar = renderCalendar;
+function createLineGraph(data, options) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        const WIDTH = 640;
+        const HEIGHT = 480;
+        const title = (0, util_1.withDropShadow)((0, text_1.getTextLabel)('TITLE', { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
+        const xLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)('X SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+        const yLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)('Y SCALE', { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+        const rotatedYLabel = (0, util_1.getRotated)(yLabel, 3 * Math.PI / 2);
+        // Render the data
+        const DATA_WIDTH = WIDTH - rotatedYLabel.width;
+        const DATA_HEIGHT = HEIGHT - title.height - xLabel.height;
+        const canvas = (0, canvas_1.createCanvas)(DATA_WIDTH, DATA_HEIGHT);
+        const c = canvas.getContext('2d');
+        c.fillStyle = 'white';
+        c.fillRect(0, 0, DATA_WIDTH, DATA_HEIGHT);
+        const sortedData = data.sort((x, y) => x.x - y.x);
+        const minX = Math.min(...sortedData.map(d => d.x));
+        const maxX = Math.max(...sortedData.map(d => d.x));
+        const xRange = maxX - minX;
+        const minY = Math.min(...sortedData.map(d => d.y));
+        const maxY = Math.max(...sortedData.map(d => d.y));
+        const yRange = maxY - minY;
+        const toChartX = (x) => Math.round(DATA_WIDTH * (x - minX) / xRange);
+        const toChartY = (y) => Math.round(DATA_HEIGHT - DATA_HEIGHT * (y - minY) / yRange);
+        // Draw the grid lines
+        const GRID_X = (_a = options === null || options === void 0 ? void 0 : options.gridX) !== null && _a !== void 0 ? _a : 1;
+        for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
+            c.strokeStyle = 'gray';
+            c.lineWidth = 2;
+            c.setLineDash([]);
+            c.beginPath();
+            c.moveTo(toChartX(x), 0);
+            c.lineTo(toChartX(x), DATA_HEIGHT);
+            c.stroke();
+        }
+        const GRID_Y = (_b = options === null || options === void 0 ? void 0 : options.gridY) !== null && _b !== void 0 ? _b : 1;
+        for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
+            c.strokeStyle = 'gray';
+            c.lineWidth = 2;
+            c.setLineDash([]);
+            c.beginPath();
+            c.moveTo(0, toChartY(y));
+            c.lineTo(DATA_WIDTH, toChartY(y));
+            c.stroke();
+        }
+        // Draw the grid line labels
+        for (let x = GRID_X * Math.round(minX / GRID_X); x < maxX; x += GRID_X) {
+            const label = (0, text_1.getTextLabel)(x.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
+            c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
+        }
+        for (let y = GRID_Y * Math.round(minY / GRID_Y); y < maxY; y += GRID_Y) {
+            const label = (0, text_1.getTextLabel)(y.toString(), { font: `bold ${Math.round(HEIGHT / 24)}px sans-serif`, height: Math.round(HEIGHT / 24), style: 'black' });
+            c.drawImage(label, 0, toChartY(y) - label.height / 2);
+        }
+        c.strokeStyle = 'blue';
+        c.lineWidth = 3;
+        c.setLineDash([]);
+        c.beginPath();
+        for (const { x, y } of sortedData) {
+            c.lineTo(toChartX(x), toChartY(y));
+            console.log(`Line to ${toChartX(x)}, ${toChartY(y)}`);
+        }
+        c.stroke();
+        return (0, util_1.joinCanvasesVertical)([
+            title,
+            (0, util_1.joinCanvasesHorizontal)([
+                rotatedYLabel,
+                canvas
+            ], { align: 'center' }),
+            xLabel
+        ], { align: 'center' });
+    });
+}
+exports.createLineGraph = createLineGraph;
 //# sourceMappingURL=graphs.js.map

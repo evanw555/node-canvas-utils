@@ -137,6 +137,10 @@ export declare function withOutline(image: Canvas | Image, options?: {
     quality?: number;
     initialAngle?: number;
 }): Canvas;
+export declare function withBorder(image: Canvas | Image, options?: {
+    thickness?: number;
+    style?: string;
+}): Canvas;
 /**
  * Given any number of source images, superimpose them onto one another in the order provided (last image will show up on top).
  * All images will be center-aligned and the output canvas will be sized to fit every image at its native resolution.

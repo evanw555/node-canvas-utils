@@ -39,4 +39,11 @@ export declare function renderCalendar(date: Date, events: Record<string, {
     tileHeight?: number;
     titleBackground?: Image | Canvas;
 }): Canvas;
+export declare function createLineGraph(data: {
+    x: number;
+    y: number;
+}[], options?: {
+    gridX?: number;
+    gridY?: number;
+}): Promise<Canvas>;
 //# sourceMappingURL=graphs.d.ts.map

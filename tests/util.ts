@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, fromWebp, isWebpBuffer, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, loadImage2, resize, skew, superimpose, warpAlongX, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, fromWebp, getRotated, isWebpBuffer, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, loadImage2, resize, skew, superimpose, warpAlongX, withBackground, withBorder, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
 import { Canvas, Image, createCanvas, loadImage } from 'canvas';
 import { readFile } from 'fs/promises';
@@ -104,6 +104,21 @@ describe('General Util tests', () => {
         expect(fs.existsSync('/tmp/node-canvas-utils/superimpose.png')).is.true;
     });
 
+    it('can rotate images', () => {
+        const canvases: Canvas[] = [
+            withBorder(withBorder(getTextLabel('None', { height: 48 }), { style: 'blue' }), { style: 'red' })
+        ];
+
+        for (let i = 0; i < Math.PI * 2; i += Math.PI / 12) {
+            canvases.push(withBorder(getRotated(withBorder(getTextLabel(`${i.toFixed(3)}`, { height: 48 }), { style: 'blue' }), i), { style: 'red' }))
+        }
+
+        const final = withBackground(joinCanvasesAsEvenGrid(canvases), 'black');
+
+        fs.writeFileSync('/tmp/node-canvas-utils/getRotated.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/getRotated.png')).is.true;
+    });
+
     it('can apply a mask to an image', () => {
         const c1 = applyMask(maskDice, maskHelloText);
         const final = fillBackground(joinCanvasesVertical([c1]), { background: 'white' });
@@ -147,6 +162,16 @@ describe('General Util tests', () => {
         const final = fillBackground(joinCanvasesVertical([c1, c2, c3, c4, c5, c6, c7, c8, c9]), { background: 'white' });
         fs.writeFileSync('/tmp/node-canvas-utils/withOutline.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/withOutline.png')).is.true;
+    });
+
+    it('can draw borders', () => {
+        const final = withBackground(joinCanvasesVertical([
+            withBorder(getTextLabel('First One')),
+            withBorder(getTextLabel('Second One'), { style: 'red' })
+        ], { spacing: 8 }), 'gray');
+
+        fs.writeFileSync('/tmp/node-canvas-utils/withBorder.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/withBorder.png')).is.true;
     });
 
     it('can decode .webp buffers', async () => {
