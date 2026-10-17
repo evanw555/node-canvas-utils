@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
+import { crop, fillBackground, getFilledBox, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -383,4 +383,65 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
         ], { align: 'center' }),
         xLabel
     ], { align: 'center' });
+}
+
+export function createPieChart(data: { value: number, label: string, style?: string }[], options?: { height?: number, title?: string }): Canvas {
+    const HEIGHT = options?.height ?? 256;
+
+    // Render the title first
+    let title: Canvas | undefined;
+    if (options?.title) {
+        const px = Math.round(HEIGHT / 6);
+        title = getTextLabel(options.title, { width: HEIGHT, height: px, font: `${px}px sans-serif`, style: 'white', align: 'center' });
+    }
+
+    const PIE_HEIGHT = HEIGHT - (title?.height ?? 0);
+    const RADIUS = Math.round(PIE_HEIGHT / 2);
+    const canvas = createCanvas(PIE_HEIGHT, PIE_HEIGHT);
+    const c = canvas.getContext('2d');
+
+    const totalValue = data.map(d => d.value).reduce((x, y) => x + y);
+    const radiansPerValue = (Math.PI * 2) / totalValue;
+
+    const sortedData = [...data].sort((x, y) => y.value - x.value);
+
+    // Draw each slice of the pie
+    let angle = -Math.PI / 2;
+    for (const { value, label, style } of sortedData) {
+        const nextAngle = angle + value * radiansPerValue;
+        c.moveTo(RADIUS, RADIUS);
+        c.beginPath();
+        c.arc(RADIUS, RADIUS, RADIUS, angle, nextAngle);
+        c.lineTo(RADIUS, RADIUS);
+        c.closePath();
+        c.fillStyle = style ?? `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
+        c.fill();
+        c.lineWidth = 2;
+        c.strokeStyle = 'white';
+        c.stroke();
+        angle = nextAngle;
+    }
+
+    const MARGIN = Math.round(HEIGHT / 32);
+
+    // Construct the legend on the side
+    // TODO: This possibly exceeds the requested height. Fix this.
+    const rows: Canvas[] = [];
+    const rowHeight = Math.round(PIE_HEIGHT / Math.max(8, sortedData.length));
+    for (const { value, label, style } of sortedData) {
+        const box = getFilledBox({ width: rowHeight, height: rowHeight, fillStyle: style });
+        const textLabel = getTextLabel(label, { margin: 4, height: rowHeight, font: `bold ${rowHeight * 0.9}px sans-serif`, style: 'white', align: 'left' });
+        rows.push(joinCanvasesHorizontal([
+            box,
+            textLabel
+        ], { spacing: MARGIN }));
+    }
+
+    return withDropShadow(joinCanvasesHorizontal([
+        joinCanvasesVertical([
+            title ?? getFilledBox(),
+            canvas
+        ], { align: 'center', spacing: MARGIN }),
+        joinCanvasesVertical(rows, { align: 'left', spacing: MARGIN })
+    ], { align: 'center', spacing: MARGIN }));
 }

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { createBarGraph, createLineGraph, renderCalendar } from '../src/graphs';
-import { crop, joinCanvasesVertical } from '../src/util';
+import { createBarGraph, createLineGraph, createPieChart, renderCalendar } from '../src/graphs';
+import { crop, joinCanvasesAsEvenGrid, joinCanvasesVertical } from '../src/util';
 import { Canvas, loadImage } from 'canvas';
 import { GraphPalette } from '../src/types';
 import { getTextLabel } from '../src/text';
@@ -87,5 +87,26 @@ describe('Graph Util tests', () => {
 
         fs.writeFileSync('/tmp/node-canvas-utils/createLineGraph.png', graph.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/createLineGraph.png')).is.true;
+    });
+
+    it('can render pie charts', () => {
+        const data: { value: number, label: string, style: string }[] = [];
+        for (let i = 0; i < 20; i++) {
+            data.push({
+                value: Math.floor(Math.random() * 100) + 1,
+                label: `#${i + 1}`,
+                style: `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`
+            });
+        }
+        const final = joinCanvasesAsEvenGrid([
+            createPieChart(data.slice(0, 1), { title: 'Just One', height: 128 }),
+            createPieChart(data.slice(0, 2)),
+            createPieChart(data.slice(0, 5)),
+            createPieChart(data.slice(0, 10)),
+            createPieChart(data.slice(0, 20), { title: 'All of Them', height: 64 }),
+        ]);
+
+        fs.writeFileSync('/tmp/node-canvas-utils/createPieChart.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/createPieChart.png')).is.true;
     });
 })

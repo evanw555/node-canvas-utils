@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.warpAlongX = exports.skew = exports.loadImage2 = exports.isWebpBuffer = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withBorder = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.withBackground = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.getFilledBox = exports.warpAlongX = exports.skew = exports.loadImage2 = exports.isWebpBuffer = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withBorder = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.withBackground = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
 const promises_1 = require("fs/promises");
@@ -730,5 +730,29 @@ exports.warpAlongX = warpAlongX;
 //         // TODO: Is there a way to do this without the canvas step?
 //         image.src = canvas.toBuffer();
 //     });
+// }
+function getFilledBox(options) {
+    var _a, _b;
+    const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : 1;
+    const HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.height) !== null && _b !== void 0 ? _b : 1;
+    const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
+    const c = canvas.getContext('2d');
+    const fillStyle = options === null || options === void 0 ? void 0 : options.fillStyle;
+    if (fillStyle) {
+        c.fillStyle = fillStyle;
+        c.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+    return canvas;
+}
+exports.getFilledBox = getFilledBox;
+// TODO: This doesn't seem to work
+// export function withBlur(image: Canvas | Image, options?: { radius?: number }): Canvas {
+//     const canvas = createCanvas(image.width, image.height);
+//     const c = canvas.getContext('2d');
+//     c.save();
+//     c.filter = `blur(${options?.radius ?? 1}px)`;
+//     c.drawImage(image, 0, 0);
+//     c.restore();
+//     return canvas;
 // }
 //# sourceMappingURL=util.js.map

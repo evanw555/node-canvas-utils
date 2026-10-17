@@ -57,5 +57,13 @@ export declare function createLineGraph(data: {
     showMin?: boolean;
     showMax?: boolean;
 }): Promise<Canvas>;
+export declare function createPieChart(data: {
+    value: number;
+    label: string;
+    style?: string;
+}[], options?: {
+    height?: number;
+    title?: string;
+}): Canvas;
 export {};
 //# sourceMappingURL=graphs.d.ts.map

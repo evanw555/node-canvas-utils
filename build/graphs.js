@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createLineGraph = exports.renderCalendar = exports.createBarGraph = void 0;
+exports.createPieChart = exports.createLineGraph = exports.renderCalendar = exports.createBarGraph = void 0;
 const canvas_1 = __importStar(require("canvas"));
 const constants_1 = require("./constants");
 const text_1 = require("./text");
@@ -378,4 +378,58 @@ function createLineGraph(data, options) {
     });
 }
 exports.createLineGraph = createLineGraph;
+function createPieChart(data, options) {
+    var _a, _b;
+    const HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.height) !== null && _a !== void 0 ? _a : 256;
+    // Render the title first
+    let title;
+    if (options === null || options === void 0 ? void 0 : options.title) {
+        const px = Math.round(HEIGHT / 6);
+        title = (0, text_1.getTextLabel)(options.title, { width: HEIGHT, height: px, font: `${px}px sans-serif`, style: 'white', align: 'center' });
+    }
+    const PIE_HEIGHT = HEIGHT - ((_b = title === null || title === void 0 ? void 0 : title.height) !== null && _b !== void 0 ? _b : 0);
+    const RADIUS = Math.round(PIE_HEIGHT / 2);
+    const canvas = (0, canvas_1.createCanvas)(PIE_HEIGHT, PIE_HEIGHT);
+    const c = canvas.getContext('2d');
+    const totalValue = data.map(d => d.value).reduce((x, y) => x + y);
+    const radiansPerValue = (Math.PI * 2) / totalValue;
+    const sortedData = [...data].sort((x, y) => y.value - x.value);
+    // Draw each slice of the pie
+    let angle = -Math.PI / 2;
+    for (const { value, label, style } of sortedData) {
+        const nextAngle = angle + value * radiansPerValue;
+        c.moveTo(RADIUS, RADIUS);
+        c.beginPath();
+        c.arc(RADIUS, RADIUS, RADIUS, angle, nextAngle);
+        c.lineTo(RADIUS, RADIUS);
+        c.closePath();
+        c.fillStyle = style !== null && style !== void 0 ? style : `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
+        c.fill();
+        c.lineWidth = 2;
+        c.strokeStyle = 'white';
+        c.stroke();
+        angle = nextAngle;
+    }
+    const MARGIN = Math.round(HEIGHT / 32);
+    // Construct the legend on the side
+    // TODO: This possibly exceeds the requested height. Fix this.
+    const rows = [];
+    const rowHeight = Math.round(PIE_HEIGHT / Math.max(8, sortedData.length));
+    for (const { value, label, style } of sortedData) {
+        const box = (0, util_1.getFilledBox)({ width: rowHeight, height: rowHeight, fillStyle: style });
+        const textLabel = (0, text_1.getTextLabel)(label, { margin: 4, height: rowHeight, font: `bold ${rowHeight * 0.9}px sans-serif`, style: 'white', align: 'left' });
+        rows.push((0, util_1.joinCanvasesHorizontal)([
+            box,
+            textLabel
+        ], { spacing: MARGIN }));
+    }
+    return (0, util_1.withDropShadow)((0, util_1.joinCanvasesHorizontal)([
+        (0, util_1.joinCanvasesVertical)([
+            title !== null && title !== void 0 ? title : (0, util_1.getFilledBox)(),
+            canvas
+        ], { align: 'center', spacing: MARGIN }),
+        (0, util_1.joinCanvasesVertical)(rows, { align: 'left', spacing: MARGIN })
+    ], { align: 'center', spacing: MARGIN }));
+}
+exports.createPieChart = createPieChart;
 //# sourceMappingURL=graphs.js.map

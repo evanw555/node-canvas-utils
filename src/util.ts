@@ -771,3 +771,34 @@ export function warpAlongX(image: Image | Canvas, options?: { leftY?: number, le
 //         image.src = canvas.toBuffer();
 //     });
 // }
+
+export function getFilledBox(options?: { width?: number, height?: number, fillStyle?: string }): Canvas {
+    const WIDTH = options?.width ?? 1;
+    const HEIGHT = options?.height ?? 1;
+
+    const canvas = createCanvas(WIDTH, HEIGHT);
+    const c = canvas.getContext('2d');
+
+    const fillStyle = options?.fillStyle;
+    if (fillStyle) {
+        c.fillStyle = fillStyle;
+        c.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+
+    return canvas;
+}
+
+// TODO: This doesn't seem to work
+// export function withBlur(image: Canvas | Image, options?: { radius?: number }): Canvas {
+//     const canvas = createCanvas(image.width, image.height);
+//     const c = canvas.getContext('2d');
+
+//     c.save();
+
+//     c.filter = `blur(${options?.radius ?? 1}px)`;
+//     c.drawImage(image, 0, 0);
+
+//     c.restore();
+
+//     return canvas;
+// }

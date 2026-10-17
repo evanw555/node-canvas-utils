@@ -271,4 +271,18 @@ describe('General Util tests', () => {
         fs.writeFileSync('/tmp/node-canvas-utils/warpAlongX.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/warpAlongX.png')).is.true;
     });
+
+    // TODO: This doesn't seem to work
+    // it('can blur images', () => {
+    //     const label = getTextLabel('Hello, World!', { height: 64, style: 'white' });
+    //     const final = joinCanvasesAsEvenGrid([
+    //         withBlur(label, { radius: 1 }),
+    //         withBlur(label, { radius: 2 }),
+    //         withBlur(label, { radius: 3 }),
+    //         withBlur(label, { radius: 4 })
+    //     ]);
+
+    //     fs.writeFileSync('/tmp/node-canvas-utils/withBlur.png', final.toBuffer());
+    //     expect(fs.existsSync('/tmp/node-canvas-utils/withBlur.png')).is.true;
+    // });
 });

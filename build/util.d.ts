@@ -243,4 +243,9 @@ export declare function warpAlongX(image: Image | Canvas, options?: {
     rightY?: number;
     rightH?: number;
 }): Canvas;
+export declare function getFilledBox(options?: {
+    width?: number;
+    height?: number;
+    fillStyle?: string;
+}): Canvas;
 //# sourceMappingURL=util.d.ts.map
