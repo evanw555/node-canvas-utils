@@ -341,7 +341,7 @@ function createLineGraph(data, options) {
             if (minPoint) {
                 const { x, y } = minPoint;
                 // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-                const text = stringifyY(y);
+                const text = `▼ ${stringifyY(y)}`;
                 const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
                 const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
                 const clampedChartY = Math.min(Math.max(0, toChartY(y) + 4), DATA_HEIGHT - label.height);
@@ -360,7 +360,7 @@ function createLineGraph(data, options) {
             if (maxPoint) {
                 const { x, y } = maxPoint;
                 // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-                const text = stringifyY(y);
+                const text = `▲ ${stringifyY(y)}`;
                 const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
                 const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
                 const clampedChartY = Math.min(Math.max(0, toChartY(y) - 1.5 * label.height), DATA_HEIGHT - label.height);
@@ -400,7 +400,7 @@ function createPieChart(data, options) {
         const nextAngle = angle + value * radiansPerValue;
         c.moveTo(RADIUS, RADIUS);
         c.beginPath();
-        c.arc(RADIUS, RADIUS, RADIUS, angle, nextAngle);
+        c.arc(RADIUS, RADIUS, RADIUS - 2, angle, nextAngle);
         c.lineTo(RADIUS, RADIUS);
         c.closePath();
         c.fillStyle = style !== null && style !== void 0 ? style : `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
@@ -416,20 +416,22 @@ function createPieChart(data, options) {
     const rows = [];
     const rowHeight = Math.round(PIE_HEIGHT / Math.max(8, sortedData.length));
     for (const { value, label, style } of sortedData) {
-        const box = (0, util_1.getFilledBox)({ width: rowHeight, height: rowHeight, fillStyle: style });
+        const box = (0, util_1.rectangle)({ width: rowHeight, height: rowHeight, fillStyle: style });
         const textLabel = (0, text_1.getTextLabel)(label, { margin: 4, height: rowHeight, font: `bold ${rowHeight * 0.9}px sans-serif`, style: 'white', align: 'left' });
         rows.push((0, util_1.joinCanvasesHorizontal)([
             box,
             textLabel
         ], { spacing: MARGIN }));
     }
+    // TODO: Expanding the canvas may affect the final size, making it not match the specified height
     return (0, util_1.withDropShadow)((0, util_1.joinCanvasesHorizontal)([
         (0, util_1.joinCanvasesVertical)([
-            title !== null && title !== void 0 ? title : (0, util_1.getFilledBox)(),
+            // TODO: Creating a dummy 1x1 rectangle is not the answer here
+            title !== null && title !== void 0 ? title : (0, util_1.rectangle)(),
             canvas
         ], { align: 'center', spacing: MARGIN }),
         (0, util_1.joinCanvasesVertical)(rows, { align: 'left', spacing: MARGIN })
-    ], { align: 'center', spacing: MARGIN }));
+    ], { align: 'center', spacing: MARGIN }), { expandCanvas: true });
 }
 exports.createPieChart = createPieChart;
 //# sourceMappingURL=graphs.js.map

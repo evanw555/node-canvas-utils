@@ -772,7 +772,7 @@ export function warpAlongX(image: Image | Canvas, options?: { leftY?: number, le
 //     });
 // }
 
-export function getFilledBox(options?: { width?: number, height?: number, fillStyle?: string }): Canvas {
+export function rectangle(options?: { width?: number, height?: number, fillStyle?: string }): Canvas {
     const WIDTH = options?.width ?? 1;
     const HEIGHT = options?.height ?? 1;
 

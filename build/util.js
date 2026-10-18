@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFilledBox = exports.warpAlongX = exports.skew = exports.loadImage2 = exports.isWebpBuffer = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withBorder = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.withBackground = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
+exports.rectangle = exports.warpAlongX = exports.skew = exports.loadImage2 = exports.isWebpBuffer = exports.fromWebp = exports.cropToSquare = exports.cropAroundPoints = exports.crop = exports.getRotated = exports.setHue = exports.superimpose = exports.withBorder = exports.withOutline = exports.withDropShadow = exports.fillWithMask = exports.applyMask = exports.toCircle = exports.withBackground = exports.fillBackground = exports.withMargin = exports.joinCanvasesAsEvenGrid = exports.joinCanvasesVertical = exports.joinCanvasesHorizontal = exports.resize = void 0;
 const canvas_1 = require("canvas");
 const webp_1 = require("@cwasm/webp");
 const promises_1 = require("fs/promises");
@@ -731,7 +731,7 @@ exports.warpAlongX = warpAlongX;
 //         image.src = canvas.toBuffer();
 //     });
 // }
-function getFilledBox(options) {
+function rectangle(options) {
     var _a, _b;
     const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : 1;
     const HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.height) !== null && _b !== void 0 ? _b : 1;
@@ -744,7 +744,7 @@ function getFilledBox(options) {
     }
     return canvas;
 }
-exports.getFilledBox = getFilledBox;
+exports.rectangle = rectangle;
 // TODO: This doesn't seem to work
 // export function withBlur(image: Canvas | Image, options?: { radius?: number }): Canvas {
 //     const canvas = createCanvas(image.width, image.height);

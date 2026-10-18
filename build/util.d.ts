@@ -243,7 +243,7 @@ export declare function warpAlongX(image: Image | Canvas, options?: {
     rightY?: number;
     rightH?: number;
 }): Canvas;
-export declare function getFilledBox(options?: {
+export declare function rectangle(options?: {
     width?: number;
     height?: number;
     fillStyle?: string;

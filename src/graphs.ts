@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, getFilledBox, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
+import { crop, fillBackground, rectangle, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -347,7 +347,7 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
         if (minPoint) {
             const { x, y } = minPoint;
             // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-            const text = stringifyY(y);
+            const text = `▼ ${stringifyY(y)}`;
             const label = withBackground(getTextLabel(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
             const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
             const clampedChartY = Math.min(Math.max(0, toChartY(y) + 4), DATA_HEIGHT - label.height);
@@ -367,7 +367,7 @@ export async function createLineGraph(data: { x: number, y: number }[], options?
         if (maxPoint) {
             const { x, y } = maxPoint;
             // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-            const text = stringifyY(y);
+            const text = `▲ ${stringifyY(y)}`;
             const label = withBackground(getTextLabel(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
             const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
             const clampedChartY = Math.min(Math.max(0, toChartY(y) - 1.5 * label.height), DATA_HEIGHT - label.height);
@@ -411,7 +411,7 @@ export function createPieChart(data: { value: number, label: string, style?: str
         const nextAngle = angle + value * radiansPerValue;
         c.moveTo(RADIUS, RADIUS);
         c.beginPath();
-        c.arc(RADIUS, RADIUS, RADIUS, angle, nextAngle);
+        c.arc(RADIUS, RADIUS, RADIUS - 2, angle, nextAngle);
         c.lineTo(RADIUS, RADIUS);
         c.closePath();
         c.fillStyle = style ?? `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
@@ -429,7 +429,7 @@ export function createPieChart(data: { value: number, label: string, style?: str
     const rows: Canvas[] = [];
     const rowHeight = Math.round(PIE_HEIGHT / Math.max(8, sortedData.length));
     for (const { value, label, style } of sortedData) {
-        const box = getFilledBox({ width: rowHeight, height: rowHeight, fillStyle: style });
+        const box = rectangle({ width: rowHeight, height: rowHeight, fillStyle: style });
         const textLabel = getTextLabel(label, { margin: 4, height: rowHeight, font: `bold ${rowHeight * 0.9}px sans-serif`, style: 'white', align: 'left' });
         rows.push(joinCanvasesHorizontal([
             box,
@@ -437,11 +437,13 @@ export function createPieChart(data: { value: number, label: string, style?: str
         ], { spacing: MARGIN }));
     }
 
+    // TODO: Expanding the canvas may affect the final size, making it not match the specified height
     return withDropShadow(joinCanvasesHorizontal([
         joinCanvasesVertical([
-            title ?? getFilledBox(),
+            // TODO: Creating a dummy 1x1 rectangle is not the answer here
+            title ?? rectangle(),
             canvas
         ], { align: 'center', spacing: MARGIN }),
         joinCanvasesVertical(rows, { align: 'left', spacing: MARGIN })
-    ], { align: 'center', spacing: MARGIN }));
+    ], { align: 'center', spacing: MARGIN }), { expandCanvas: true });
 }

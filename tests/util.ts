@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { getTextBox, getTextLabel } from '../src/text';
-import { applyMask, fillBackground, fillWithMask, fromWebp, getRotated, isWebpBuffer, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, loadImage2, resize, skew, superimpose, warpAlongX, withBackground, withBorder, withDropShadow, withOutline } from '../src/util';
+import { applyMask, fillBackground, fillWithMask, fromWebp, getRotated, isWebpBuffer, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, loadImage2, rectangle, resize, skew, superimpose, warpAlongX, withBackground, withBorder, withDropShadow, withOutline } from '../src/util';
 import { expect } from 'chai';
 import { Canvas, Image, createCanvas, loadImage } from 'canvas';
 import { readFile } from 'fs/promises';
@@ -269,6 +269,25 @@ describe('General Util tests', () => {
         ]);
 
         fs.writeFileSync('/tmp/node-canvas-utils/warpAlongX.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/warpAlongX.png')).is.true;
+    });
+
+    it('can create rectangles', () => {
+        const rectangles: Canvas[] = [];
+        for (let i = 0; i < 64; i++) {
+            const x = 32 + Math.floor(Math.random() * 228);
+            rectangles.push(rectangle({
+                width: 12,
+                height: 12,
+                fillStyle: i < 32
+                    ? `rgb(${Math.floor(Math.random() * x / 2)},${x},${Math.floor(Math.random() * x / 2)})`
+                    : `rgb(${x},${Math.floor(Math.random() * x / 2)},${Math.floor(Math.random() * x / 2)})`
+            }));
+        }
+
+        const final = joinCanvasesAsEvenGrid(rectangles);
+
+        fs.writeFileSync('/tmp/node-canvas-utils/rectangle.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/warpAlongX.png')).is.true;
     });
 
