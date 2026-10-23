@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTextGrid = exports.getTextBox = exports.getVerticalTextLabel = exports.getTextLabel = exports.getTextWidth = void 0;
+exports.getTextGrid = exports.getTextBox = exports.getVerticalTextLabel = exports.getMarkdownTextLabel = exports.getTextLabel = exports.getTextWidth = void 0;
 const canvas_1 = require("canvas");
 const util_1 = require("./util");
 // Dummy canvas to be reused when measuring text width (creating a new one each time may be costly)
@@ -36,24 +36,23 @@ exports.getTextWidth = getTextWidth;
  * @returns New canvas containing the specified text
  */
 function getTextLabel(text, options) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.height) !== null && _a !== void 0 ? _a : 20;
-    const FONT = (_b = options === null || options === void 0 ? void 0 : options.font) !== null && _b !== void 0 ? _b : `${HEIGHT * 0.6}px sans-serif`;
-    const WIDTH = (_c = options === null || options === void 0 ? void 0 : options.width) !== null && _c !== void 0 ? _c : getTextWidth(text, FONT);
-    const ALIGN = (_d = options === null || options === void 0 ? void 0 : options.align) !== null && _d !== void 0 ? _d : 'center';
+    const HEIGHT = options?.height ?? 20;
+    const FONT = options?.font ?? `${HEIGHT * 0.6}px sans-serif`;
+    const WIDTH = options?.width ?? getTextWidth(text, FONT);
+    const ALIGN = options?.align ?? 'center';
     if (!text) {
         throw new Error('Cannot create a text label with no text');
     }
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const context = canvas.getContext('2d');
     context.font = FONT;
-    context.fillStyle = (_e = options === null || options === void 0 ? void 0 : options.style) !== null && _e !== void 0 ? _e : 'white';
-    context.globalAlpha = (_f = options === null || options === void 0 ? void 0 : options.alpha) !== null && _f !== void 0 ? _f : 1;
+    context.fillStyle = options?.style ?? 'white';
+    context.globalAlpha = options?.alpha ?? 1;
     const ascent = context.measureText(text).actualBoundingBoxAscent;
     const verticalMargin = (HEIGHT - ascent) / 2;
     if (ALIGN === 'center') {
         const textWidth = context.measureText(text).width;
-        const margin = (_g = options === null || options === void 0 ? void 0 : options.margin) !== null && _g !== void 0 ? _g : 0;
+        const margin = options?.margin ?? 0;
         const usableWidth = WIDTH - (2 * margin);
         if (textWidth > usableWidth) {
             // If the text is too wide for the label, compress it
@@ -74,6 +73,111 @@ function getTextLabel(text, options) {
     return canvas;
 }
 exports.getTextLabel = getTextLabel;
+// TODO: This util needs a ton of optimization
+async function getMarkdownTextLabel(text, options) {
+    const HEIGHT = options?.height ?? 24;
+    const canvases = [];
+    let bold = false;
+    let italic = false;
+    // TODO: Support this somewhow
+    let underline = false;
+    let strikethrough = false;
+    let i = 0;
+    let textBuffer = '';
+    const renderTextBuffer = () => {
+        const font = (bold ? 'bold ' : '') + (italic ? 'italic ' : '') + (strikethrough ? 'strikethrough ' : '') + `${Math.round(0.85 * HEIGHT)}px` + (options?.fontFamily ?? 'sans-serif');
+        const label = getTextLabel(textBuffer, { height: options?.height, style: options?.style, font });
+        return label;
+    };
+    const processTextBuffer = () => {
+        if (textBuffer.length > 0) {
+            canvases.push(renderTextBuffer());
+            textBuffer = '';
+        }
+    };
+    while (i < text.length) {
+        // If it starts with a custom image pattern
+        const inlineImages = options?.inlineImages ?? {};
+        let imageFound = false;
+        for (const rawPattern of Object.keys(inlineImages)) {
+            const pattern = new RegExp('^' + rawPattern);
+            const match = text.substring(i).match(pattern);
+            if (match) {
+                const fn = inlineImages[rawPattern];
+                const image = await fn(match);
+                if (image) {
+                    processTextBuffer();
+                    canvases.push((0, util_1.resize)(image, { height: HEIGHT }));
+                    i += match[0].length;
+                    imageFound = true;
+                    break;
+                }
+            }
+        }
+        if (imageFound) {
+            continue;
+        }
+        // If starts with an emoji
+        // NOTE: The emoji must start with normal emoji characters, not e.g. ZWJ
+        const emojiMatch = text.substring(i).match(/^\p{Extended_Pictographic}[\p{Extended_Pictographic}\u{200D}\u{FE0F}\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}\u{20E3}]*/u);
+        if (emojiMatch) {
+            processTextBuffer();
+            const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+            const segments = segmenter.segment(emojiMatch[0]);
+            for (const segment of segments) {
+                // Convert each code point of the emoji into a raw hex string
+                const codePoints = [...segment.segment].map(s => s.codePointAt(0)?.toString(16));
+                // Unless the zero-width joiner is included (200d), strip out the variant code point (fe0f)
+                // See this thread for context: https://github.com/twitter/twemoji/issues/419
+                const contains200d = codePoints.includes('200d');
+                const identifier = codePoints.filter(cp => contains200d || cp !== 'fe0f').join('-');
+                let image;
+                try {
+                    image = await (0, canvas_1.loadImage)(`https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/${identifier}.png`);
+                }
+                catch (err) {
+                    try {
+                        image = await (0, canvas_1.loadImage)(`https://www.emojiall.com/images/120/apple/ios-17.4/${identifier}.png`);
+                    }
+                    catch (err2) {
+                        image = getTextLabel(`ERROR_EMOJI_${identifier}`);
+                    }
+                }
+                canvases.push((0, util_1.resize)(image, { height: HEIGHT }));
+            }
+            i += emojiMatch[0].length;
+        }
+        else if (text.substring(i, i + 2) === '**' && (bold || text.includes('**', i + 2))) {
+            processTextBuffer();
+            bold = !bold;
+            i += 2;
+        }
+        else if (text.substring(i, i + 2) === '__' && (strikethrough || text.includes('__', i + 2))) {
+            // TODO: This doesn't actually work, will need to manually underline it
+            processTextBuffer();
+            underline = !underline;
+            i += 2;
+        }
+        else if (text.substring(i, i + 1) === '_' && (italic || text.includes('_', i + 1))) {
+            processTextBuffer();
+            italic = !italic;
+            i++;
+        }
+        else if (text.substring(i, i + 2) === '~~' && (strikethrough || text.includes('~~', i + 2))) {
+            // TODO: This doesn't actually work, will need to manually strike it out
+            processTextBuffer();
+            strikethrough = !strikethrough;
+            i += 2;
+        }
+        else {
+            textBuffer += text.substring(i, i + 1);
+            i++;
+        }
+    }
+    processTextBuffer();
+    return (0, util_1.joinCanvasesHorizontal)(canvases);
+}
+exports.getMarkdownTextLabel = getMarkdownTextLabel;
 /**
  * Generates a canvas containing the specified text displayed vertically (top-to-bottom) with optional parameters.
  * The options are the same as in {@link getTextLabel}, and have the sam effect.
@@ -84,7 +188,7 @@ function getVerticalTextLabel(text, options) {
     }
     const characters = text.trim().split('');
     const canvases = characters.map(c => getTextLabel(c, options));
-    return (0, util_1.joinCanvasesVertical)(canvases, { align: options === null || options === void 0 ? void 0 : options.align });
+    return (0, util_1.joinCanvasesVertical)(canvases, { align: options?.align });
 }
 exports.getVerticalTextLabel = getVerticalTextLabel;
 /**
@@ -102,10 +206,9 @@ exports.getVerticalTextLabel = getVerticalTextLabel;
  * @returns New canvas containing the specified text
  */
 function getTextBox(text, width, rowHeight, options) {
-    var _a;
     const dummyCanvas = (0, canvas_1.createCanvas)(1, 1);
     const context = dummyCanvas.getContext('2d');
-    context.font = (_a = options === null || options === void 0 ? void 0 : options.font) !== null && _a !== void 0 ? _a : `${rowHeight * 0.6}px sans-serif`;
+    context.font = options?.font ?? `${rowHeight * 0.6}px sans-serif`;
     // TODO: Ensure this list isn't empty
     const words = text.split(' ');
     const rows = [];
@@ -129,7 +232,7 @@ function getTextBox(text, width, rowHeight, options) {
         }
         // Render this row and add it to the list of canvases to join
         // TODO: This makes the big assumption that the font will be the same. Can we guarantee this? Helper utility for default font or something?
-        rows.push(getTextLabel(wordsThisRow.join(' '), Object.assign({ width, height: rowHeight }, options)));
+        rows.push(getTextLabel(wordsThisRow.join(' '), { width, height: rowHeight, ...options }));
     }
     return (0, util_1.joinCanvasesVertical)(rows);
 }
@@ -151,11 +254,11 @@ function getTextGrid(cells, options) {
         for (let r = 0; r < rows; r++) {
             const cell = cells[r][c];
             // Avoid creating empty text labels by replacing empty cells with whitespace
-            canvases.push(getTextLabel(cell.text || ' ', { style: cell.style, font: cell.font, height: options === null || options === void 0 ? void 0 : options.rowHeight }));
+            canvases.push(getTextLabel(cell.text || ' ', { style: cell.style, font: cell.font, height: options?.rowHeight }));
         }
         columns.push((0, util_1.joinCanvasesVertical)(canvases, { align: 'left' }));
     }
-    return (0, util_1.joinCanvasesHorizontal)(columns, { align: 'top', spacing: options === null || options === void 0 ? void 0 : options.spacing });
+    return (0, util_1.joinCanvasesHorizontal)(columns, { align: 'top', spacing: options?.spacing });
 }
 exports.getTextGrid = getTextGrid;
 //# sourceMappingURL=text.js.map

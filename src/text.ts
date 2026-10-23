@@ -1,5 +1,5 @@
-import { Canvas, createCanvas } from "canvas";
-import { joinCanvasesHorizontal, joinCanvasesVertical } from "./util";
+import { Canvas, Image, createCanvas, loadImage } from "canvas";
+import { joinCanvasesHorizontal, joinCanvasesVertical, resize } from "./util";
 
 // Dummy canvas to be reused when measuring text width (creating a new one each time may be costly)
 let dummyCanvas: Canvas | undefined = undefined;
@@ -74,6 +74,107 @@ export function getTextLabel(text: string, options?: { width?: number, height?: 
     context.restore();
 
     return canvas;
+}
+
+// TODO: This util needs a ton of optimization
+export async function getMarkdownTextLabel(text: string, options?: { height?: number, fontFamily?: string, style?: string, inlineImages?: Record<string, (match: RegExpMatchArray) => Promise<Canvas | Image | undefined>> }): Promise<Canvas> {
+    const HEIGHT = options?.height ?? 24;
+
+    const canvases: (Canvas | Image)[] = [];
+
+    let bold = false;
+    let italic = false;
+    // TODO: Support this somewhow
+    let underline = false;
+    let strikethrough = false;
+
+    let i = 0;
+    let textBuffer = '';
+    const renderTextBuffer = () => {
+        const font = (bold ? 'bold ' : '') + (italic ? 'italic ' : '') + (strikethrough ? 'strikethrough ' : '') + `${Math.round(0.85 * HEIGHT)}px` + (options?.fontFamily ?? 'sans-serif'); 
+        const label = getTextLabel(textBuffer, { height: options?.height, style: options?.style, font });
+        return label;
+    };
+    const processTextBuffer = () => {
+        if (textBuffer.length > 0) {
+            canvases.push(renderTextBuffer());
+            textBuffer = '';
+        }
+    };
+    while (i < text.length) {
+        // If it starts with a custom image pattern
+        const inlineImages = options?.inlineImages ?? {};
+        let imageFound = false;
+        for (const rawPattern of Object.keys(inlineImages)) {
+            const pattern = new RegExp('^' + rawPattern);
+            const match = text.substring(i).match(pattern);
+            if (match) {
+                const fn = inlineImages[rawPattern];
+                const image = await fn(match);
+                if (image) {
+                    processTextBuffer();
+                    canvases.push(resize(image, { height: HEIGHT }));
+                    i += match[0].length;
+                    imageFound = true;
+                    break;
+                }
+            }
+        }
+        if (imageFound) {
+            continue;
+        }
+        // If starts with an emoji
+        // NOTE: The emoji must start with normal emoji characters, not e.g. ZWJ
+        const emojiMatch = text.substring(i).match(/^\p{Extended_Pictographic}[\p{Extended_Pictographic}\u{200D}\u{FE0F}\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}\u{20E3}]*/u);
+        if (emojiMatch) {
+            processTextBuffer();
+            const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+            const segments = segmenter.segment(emojiMatch[0]);
+            for (const segment of segments) {
+                // Convert each code point of the emoji into a raw hex string
+                const codePoints = [...segment.segment].map(s => s.codePointAt(0)?.toString(16));
+                // Unless the zero-width joiner is included (200d), strip out the variant code point (fe0f)
+                // See this thread for context: https://github.com/twitter/twemoji/issues/419
+                const contains200d = codePoints.includes('200d');
+                const identifier = codePoints.filter(cp => contains200d || cp !== 'fe0f').join('-');
+                let image: Image | Canvas;
+                try {
+                    image = await loadImage(`https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/${identifier}.png`);
+                } catch (err) {
+                    try {
+                        image = await loadImage(`https://www.emojiall.com/images/120/apple/ios-17.4/${identifier}.png`);
+                    } catch (err2) {
+                        image = getTextLabel(`ERROR_EMOJI_${identifier}`);
+                    }
+                }
+                canvases.push(resize(image, { height: HEIGHT }));
+            }
+            i += emojiMatch[0].length;
+        } else if (text.substring(i, i + 2) === '**' && (bold || text.includes('**', i + 2))) {
+            processTextBuffer();
+            bold = !bold;
+            i += 2;
+        } else if (text.substring(i, i + 2) === '__' && (strikethrough || text.includes('__', i + 2))) {
+            // TODO: This doesn't actually work, will need to manually underline it
+            processTextBuffer();
+            underline = !underline;
+            i += 2;
+        } else if (text.substring(i, i + 1) === '_' && (italic || text.includes('_', i + 1))) {
+            processTextBuffer();
+            italic = !italic;
+            i++;
+        } else if (text.substring(i, i + 2) === '~~' && (strikethrough || text.includes('~~', i + 2))) {
+            // TODO: This doesn't actually work, will need to manually strike it out
+            processTextBuffer();
+            strikethrough = !strikethrough;
+            i += 2;
+        } else {
+            textBuffer += text.substring(i, i + 1);
+            i++;
+        }
+    }
+    processTextBuffer();
+    return joinCanvasesHorizontal(canvases);
 }
 
 /**

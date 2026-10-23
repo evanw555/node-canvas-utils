@@ -22,15 +22,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPieChart = exports.createLineGraph = exports.renderCalendar = exports.createBarGraph = void 0;
 const canvas_1 = __importStar(require("canvas"));
@@ -50,115 +41,111 @@ const util_1 = require("./util");
  * @param options.decimalPrecision Number of decimal places to show on row number values
  * @returns New canvas containing the rendered bar graph
  */
-function createBarGraph(entries, options) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    return __awaiter(this, void 0, void 0, function* () {
-        const ROW_HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.rowHeight) !== null && _a !== void 0 ? _a : 40;
-        const WIDTH = (_b = options === null || options === void 0 ? void 0 : options.width) !== null && _b !== void 0 ? _b : 480;
-        const SHOW_NAMES = (_c = options === null || options === void 0 ? void 0 : options.showNames) !== null && _c !== void 0 ? _c : true;
-        const SHOW_ICONS = (_d = options === null || options === void 0 ? void 0 : options.showIcons) !== null && _d !== void 0 ? _d : true;
-        const PALETTE = (_e = options === null || options === void 0 ? void 0 : options.palette) !== null && _e !== void 0 ? _e : constants_1.DEFAULT_GRAPH_PALETTE;
-        const DECIMAL_PRECISION = (_f = options === null || options === void 0 ? void 0 : options.decimalPrecision) !== null && _f !== void 0 ? _f : 1;
-        // Margin between elements and around the edge of the canvas
-        const MARGIN = 8;
-        // Padding within boxes
-        const PADDING = 4;
-        const TOTAL_ROWS = entries.length;
-        const HEIGHT = TOTAL_ROWS * ROW_HEIGHT + (TOTAL_ROWS + 1) * MARGIN;
-        const c = canvas_1.default.createCanvas(WIDTH, HEIGHT);
-        const context = c.getContext('2d');
-        // The font for all text in the graph itself is the same
-        context.font = `${Math.floor(ROW_HEIGHT * 0.6)}px sans-serif`;
-        // Determine the largest entry value
-        const maxEntryValue = Math.max(...entries.map(e => e.value));
-        // Draw each row
-        let baseY = MARGIN;
-        for (const entry of entries) {
-            // TODO: Use image loader with cache
-            let image = undefined;
-            if (entry.icon) {
-                if (typeof entry.icon === 'string') {
-                    try {
-                        image = yield canvas_1.default.loadImage(entry.icon);
-                    }
-                    catch (err) {
-                        // TODO: Use broken image
-                    }
+async function createBarGraph(entries, options) {
+    const ROW_HEIGHT = options?.rowHeight ?? 40;
+    const WIDTH = options?.width ?? 480;
+    const SHOW_NAMES = options?.showNames ?? true;
+    const SHOW_ICONS = options?.showIcons ?? true;
+    const PALETTE = options?.palette ?? constants_1.DEFAULT_GRAPH_PALETTE;
+    const DECIMAL_PRECISION = options?.decimalPrecision ?? 1;
+    // Margin between elements and around the edge of the canvas
+    const MARGIN = 8;
+    // Padding within boxes
+    const PADDING = 4;
+    const TOTAL_ROWS = entries.length;
+    const HEIGHT = TOTAL_ROWS * ROW_HEIGHT + (TOTAL_ROWS + 1) * MARGIN;
+    const c = canvas_1.default.createCanvas(WIDTH, HEIGHT);
+    const context = c.getContext('2d');
+    // The font for all text in the graph itself is the same
+    context.font = `${Math.floor(ROW_HEIGHT * 0.6)}px sans-serif`;
+    // Determine the largest entry value
+    const maxEntryValue = Math.max(...entries.map(e => e.value));
+    // Draw each row
+    let baseY = MARGIN;
+    for (const entry of entries) {
+        // TODO: Use image loader with cache
+        let image = undefined;
+        if (entry.icon) {
+            if (typeof entry.icon === 'string') {
+                try {
+                    image = await canvas_1.default.loadImage(entry.icon);
                 }
-                else {
-                    image = entry.icon;
+                catch (err) {
+                    // TODO: Use broken image
                 }
-            }
-            let baseX = MARGIN;
-            // Write the name to the left of the icon
-            if (SHOW_NAMES) {
-                context.fillStyle = PALETTE.padding;
-                context.fillRect(baseX, baseY, ROW_HEIGHT * 2, ROW_HEIGHT);
-                context.fillStyle = PALETTE.text;
-                context.fillText(entry.name, baseX + PADDING, baseY + 0.75 * ROW_HEIGHT, (ROW_HEIGHT - PADDING) * 2);
-                baseX += ROW_HEIGHT * 2 + MARGIN;
-            }
-            // Draw the icon
-            if (SHOW_ICONS) {
-                context.fillStyle = PALETTE.padding;
-                context.fillRect(baseX, baseY, ROW_HEIGHT, ROW_HEIGHT);
-                // TODO: Once using image loader, image should always be defined
-                if (image) {
-                    context.drawImage(image, baseX + PADDING, baseY + PADDING, ROW_HEIGHT - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
-                }
-                baseX += ROW_HEIGHT + MARGIN;
-            }
-            // Draw the bar
-            const MAX_BAR_WIDTH = WIDTH - baseX - MARGIN;
-            const barWidth = Math.floor(MAX_BAR_WIDTH * entry.value / maxEntryValue);
-            context.fillStyle = PALETTE.padding;
-            context.fillRect(baseX, baseY, barWidth, ROW_HEIGHT);
-            if (barWidth > PADDING * 2) {
-                // Use the color override if it exists, else use the palette highlight color
-                context.fillStyle = (_g = entry.color) !== null && _g !== void 0 ? _g : PALETTE.highlight;
-                context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
-            }
-            // If an arrow is specified, draw accordingly
-            // TODO: This feature sucks and should be better
-            if (entry.arrow) {
-                context.fillStyle = entry.arrow === 'up' ? 'darkgreen' : 'darkred';
-                context.fillText(entry.arrow === 'up' ? '⬆' : '⬇', baseX + 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
-            }
-            // Write the number value
-            const valueText = parseFloat(entry.value.toFixed(DECIMAL_PRECISION)).toString();
-            const valueTextWidth = context.measureText(valueText).width;
-            context.fillStyle = PALETTE.text;
-            if (valueTextWidth + 4 * PADDING < barWidth) {
-                // If it's small enough, write it inside the bar
-                context.fillText(valueText, baseX + barWidth - valueTextWidth - 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
             }
             else {
-                // Else, write it outside the bar
-                context.fillText(valueText, baseX + barWidth + MARGIN, baseY + 0.75 * ROW_HEIGHT);
+                image = entry.icon;
             }
-            // Advance vertical offset
-            baseY += ROW_HEIGHT + MARGIN;
         }
-        const canvases = [];
-        // If it has a title, add it
-        if (options === null || options === void 0 ? void 0 : options.title) {
-            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.title, { width: WIDTH, height: ROW_HEIGHT, align: 'center', style: PALETTE.text, margin: MARGIN }));
+        let baseX = MARGIN;
+        // Write the name to the left of the icon
+        if (SHOW_NAMES) {
+            context.fillStyle = PALETTE.padding;
+            context.fillRect(baseX, baseY, ROW_HEIGHT * 2, ROW_HEIGHT);
+            context.fillStyle = PALETTE.text;
+            context.fillText(entry.name, baseX + PADDING, baseY + 0.75 * ROW_HEIGHT, (ROW_HEIGHT - PADDING) * 2);
+            baseX += ROW_HEIGHT * 2 + MARGIN;
         }
-        // If it has a subtitle, add it
-        if (options === null || options === void 0 ? void 0 : options.subtitle) {
-            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.subtitle, { width: WIDTH, height: Math.round(ROW_HEIGHT * 0.66), align: 'center', style: PALETTE.text, margin: MARGIN }));
+        // Draw the icon
+        if (SHOW_ICONS) {
+            context.fillStyle = PALETTE.padding;
+            context.fillRect(baseX, baseY, ROW_HEIGHT, ROW_HEIGHT);
+            // TODO: Once using image loader, image should always be defined
+            if (image) {
+                context.drawImage(image, baseX + PADDING, baseY + PADDING, ROW_HEIGHT - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
+            }
+            baseX += ROW_HEIGHT + MARGIN;
         }
-        // Add the actual graph
-        canvases.push(c);
-        // Return all components joined with a background
-        return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)(canvases), PALETTE);
-    });
+        // Draw the bar
+        const MAX_BAR_WIDTH = WIDTH - baseX - MARGIN;
+        const barWidth = Math.floor(MAX_BAR_WIDTH * entry.value / maxEntryValue);
+        context.fillStyle = PALETTE.padding;
+        context.fillRect(baseX, baseY, barWidth, ROW_HEIGHT);
+        if (barWidth > PADDING * 2) {
+            // Use the color override if it exists, else use the palette highlight color
+            context.fillStyle = entry.color ?? PALETTE.highlight;
+            context.fillRect(baseX + PADDING, baseY + PADDING, barWidth - 2 * PADDING, ROW_HEIGHT - 2 * PADDING);
+        }
+        // If an arrow is specified, draw accordingly
+        // TODO: This feature sucks and should be better
+        if (entry.arrow) {
+            context.fillStyle = entry.arrow === 'up' ? 'darkgreen' : 'darkred';
+            context.fillText(entry.arrow === 'up' ? '⬆' : '⬇', baseX + 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
+        }
+        // Write the number value
+        const valueText = parseFloat(entry.value.toFixed(DECIMAL_PRECISION)).toString();
+        const valueTextWidth = context.measureText(valueText).width;
+        context.fillStyle = PALETTE.text;
+        if (valueTextWidth + 4 * PADDING < barWidth) {
+            // If it's small enough, write it inside the bar
+            context.fillText(valueText, baseX + barWidth - valueTextWidth - 2 * PADDING, baseY + 0.75 * ROW_HEIGHT);
+        }
+        else {
+            // Else, write it outside the bar
+            context.fillText(valueText, baseX + barWidth + MARGIN, baseY + 0.75 * ROW_HEIGHT);
+        }
+        // Advance vertical offset
+        baseY += ROW_HEIGHT + MARGIN;
+    }
+    const canvases = [];
+    // If it has a title, add it
+    if (options?.title) {
+        canvases.push((0, text_1.getTextLabel)(options?.title, { width: WIDTH, height: ROW_HEIGHT, align: 'center', style: PALETTE.text, margin: MARGIN }));
+    }
+    // If it has a subtitle, add it
+    if (options?.subtitle) {
+        canvases.push((0, text_1.getTextLabel)(options?.subtitle, { width: WIDTH, height: Math.round(ROW_HEIGHT * 0.66), align: 'center', style: PALETTE.text, margin: MARGIN }));
+    }
+    // Add the actual graph
+    canvases.push(c);
+    // Return all components joined with a background
+    return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)(canvases), PALETTE);
 }
 exports.createBarGraph = createBarGraph;
 function renderCalendar(date, events, options) {
-    var _a, _b, _c, _d;
-    const TILE_WIDTH = (_a = options === null || options === void 0 ? void 0 : options.tileWidth) !== null && _a !== void 0 ? _a : 160;
-    const TILE_HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.tileHeight) !== null && _b !== void 0 ? _b : 120;
+    const TILE_WIDTH = options?.tileWidth ?? 160;
+    const TILE_HEIGHT = options?.tileHeight ?? 120;
     const firstDay = new Date(date);
     firstDay.setDate(1);
     const endOn = new Date(firstDay);
@@ -174,7 +161,7 @@ function renderCalendar(date, events, options) {
         c.fillRect(0, 0, tile.width, tile.height);
         if (current.getMonth() === month) {
             // Draw any events for this day
-            const event = (_c = events[current.getDate().toString()]) !== null && _c !== void 0 ? _c : events[`${month + 1}/${current.getDate().toString()}`];
+            const event = events[current.getDate().toString()] ?? events[`${month + 1}/${current.getDate().toString()}`];
             // Draw background first
             if (event && event.background) {
                 const image = event.background;
@@ -227,21 +214,21 @@ function renderCalendar(date, events, options) {
         current.setDate(current.getDate() + 1);
     }
     const grid = (0, util_1.joinCanvasesAsEvenGrid)(tiles, { columns: 7 });
-    let title = (0, util_1.withOutline)((0, text_1.getTextLabel)((_d = options === null || options === void 0 ? void 0 : options.title) !== null && _d !== void 0 ? _d : `Month ${month.toString()}`, { width: grid.width, height: TILE_HEIGHT, style: 'white' }), { style: 'black', thickness: 5 });
-    const tbg = options === null || options === void 0 ? void 0 : options.titleBackground;
+    let title = (0, util_1.withOutline)((0, text_1.getTextLabel)(options?.title ?? `Month ${month.toString()}`, { width: grid.width, height: TILE_HEIGHT, style: 'white' }), { style: 'black', thickness: 5 });
+    const tbg = options?.titleBackground;
     if (tbg) {
         title = (0, util_1.withBackground)(title, tbg);
     }
     const canvases = [title, grid];
     // Add footer if specified
-    if (options === null || options === void 0 ? void 0 : options.footer) {
+    if (options?.footer) {
         if (tbg) {
-            canvases.push((0, util_1.withBackground)((0, util_1.withOutline)((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { width: grid.width, height: TILE_HEIGHT / 4, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'white', align: 'center' }), { style: 'black', thickness: 3 }), tbg));
+            canvases.push((0, util_1.withBackground)((0, util_1.withOutline)((0, text_1.getTextLabel)(options?.footer, { width: grid.width, height: TILE_HEIGHT / 4, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'white', align: 'center' }), { style: 'black', thickness: 3 }), tbg));
         }
         else {
-            canvases.push((0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' }));
+            canvases.push((0, text_1.getTextLabel)(options?.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' }));
         }
-        let footer = (0, text_1.getTextLabel)(options === null || options === void 0 ? void 0 : options.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' });
+        let footer = (0, text_1.getTextLabel)(options?.footer, { height: TILE_HEIGHT / 5, font: `bold ${Math.round(TILE_HEIGHT / 5)}px sans-serif`, style: 'black', align: 'center' });
         if (tbg) {
             footer = (0, util_1.withBackground)((0, util_1.withOutline)(footer, { style: 'black', thickness: 5 }), tbg);
         }
@@ -249,145 +236,141 @@ function renderCalendar(date, events, options) {
     return (0, util_1.fillBackground)((0, util_1.joinCanvasesVertical)(canvases, { align: 'center' }), { background: 'white' });
 }
 exports.renderCalendar = renderCalendar;
-function createLineGraph(data, options) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
-    return __awaiter(this, void 0, void 0, function* () {
-        const WIDTH = 640;
-        const HEIGHT = 480;
-        const TITLE = (_a = options === null || options === void 0 ? void 0 : options.title) !== null && _a !== void 0 ? _a : 'Line Graph';
-        const title = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(TITLE, { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
-        const xAxisName = (_c = (_b = options === null || options === void 0 ? void 0 : options.x) === null || _b === void 0 ? void 0 : _b.label) !== null && _c !== void 0 ? _c : 'X Axis';
-        const xLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(xAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
-        const yAxisName = (_e = (_d = options === null || options === void 0 ? void 0 : options.y) === null || _d === void 0 ? void 0 : _d.label) !== null && _e !== void 0 ? _e : 'Y Axis';
-        const yLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(yAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
-        const rotatedYLabel = (0, util_1.getRotated)(yLabel, 3 * Math.PI / 2);
-        // Render the data
-        const BORDER_WIDTH = 2;
-        const DATA_WIDTH = WIDTH - rotatedYLabel.width - 2 * BORDER_WIDTH;
-        const DATA_HEIGHT = HEIGHT - title.height - xLabel.height - 2 * BORDER_WIDTH;
-        const canvas = (0, canvas_1.createCanvas)(DATA_WIDTH, DATA_HEIGHT);
-        const c = canvas.getContext('2d');
-        c.fillStyle = 'white';
-        c.fillRect(0, 0, DATA_WIDTH, DATA_HEIGHT);
-        const sortedData = data.sort((x, y) => x.x - y.x);
-        const minX = Math.min(...sortedData.map(d => d.x));
-        const maxX = Math.max(...sortedData.map(d => d.x));
-        const xRange = maxX - minX;
-        const realMinY = Math.min(...sortedData.map(d => d.y));
-        const realMaxY = Math.max(...sortedData.map(d => d.y));
-        const realYRange = realMaxY - realMinY;
-        const minY = (_g = (_f = options === null || options === void 0 ? void 0 : options.y) === null || _f === void 0 ? void 0 : _f.min) !== null && _g !== void 0 ? _g : (realMinY - 0.15 * realYRange);
-        const maxY = (_j = (_h = options === null || options === void 0 ? void 0 : options.y) === null || _h === void 0 ? void 0 : _h.max) !== null && _j !== void 0 ? _j : (realMaxY + 0.075 * realYRange);
-        const yRange = maxY - minY;
-        const toChartX = (x) => Math.round(DATA_WIDTH * (x - minX) / xRange);
-        const toChartY = (y) => Math.round(DATA_HEIGHT - DATA_HEIGHT * (y - minY) / yRange);
-        const stringifyX = (_l = (_k = options === null || options === void 0 ? void 0 : options.x) === null || _k === void 0 ? void 0 : _k.stringify) !== null && _l !== void 0 ? _l : ((value) => value.toString());
-        const stringifyY = (_o = (_m = options === null || options === void 0 ? void 0 : options.y) === null || _m === void 0 ? void 0 : _m.stringify) !== null && _o !== void 0 ? _o : ((value) => value.toString());
-        // Draw the grid lines
-        const X_SCALE = (_q = (_p = options === null || options === void 0 ? void 0 : options.x) === null || _p === void 0 ? void 0 : _p.scale) !== null && _q !== void 0 ? _q : 1;
-        for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
-            c.strokeStyle = 'lightgray';
-            c.lineWidth = 2;
-            c.setLineDash([]);
-            c.beginPath();
-            c.moveTo(toChartX(x), 0);
-            c.lineTo(toChartX(x), DATA_HEIGHT);
-            c.stroke();
-        }
-        const Y_SCALE = (_s = (_r = options === null || options === void 0 ? void 0 : options.y) === null || _r === void 0 ? void 0 : _r.scale) !== null && _s !== void 0 ? _s : 1;
-        for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
-            c.strokeStyle = 'lightgray';
-            c.lineWidth = 2;
-            c.setLineDash([]);
-            c.beginPath();
-            c.moveTo(0, toChartY(y));
-            c.lineTo(DATA_WIDTH, toChartY(y));
-            c.stroke();
-        }
-        // Draw the data line
-        c.strokeStyle = 'blue';
-        c.lineWidth = 3;
+async function createLineGraph(data, options) {
+    const WIDTH = 640;
+    const HEIGHT = 480;
+    const TITLE = options?.title ?? 'Line Graph';
+    const title = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(TITLE, { font: `${Math.round(HEIGHT / 8)}px sans-serif`, height: Math.round(HEIGHT / 8), align: 'center' }), { expandCanvas: true });
+    const xAxisName = options?.x?.label ?? 'X Axis';
+    const xLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(xAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+    const yAxisName = options?.y?.label ?? 'Y Axis';
+    const yLabel = (0, util_1.withDropShadow)((0, text_1.getTextLabel)(yAxisName, { font: `${Math.round(HEIGHT / 16)}px sans-serif`, height: Math.round(HEIGHT / 16), align: 'center' }), { expandCanvas: true });
+    const rotatedYLabel = (0, util_1.getRotated)(yLabel, 3 * Math.PI / 2);
+    // Render the data
+    const BORDER_WIDTH = 2;
+    const DATA_WIDTH = WIDTH - rotatedYLabel.width - 2 * BORDER_WIDTH;
+    const DATA_HEIGHT = HEIGHT - title.height - xLabel.height - 2 * BORDER_WIDTH;
+    const canvas = (0, canvas_1.createCanvas)(DATA_WIDTH, DATA_HEIGHT);
+    const c = canvas.getContext('2d');
+    c.fillStyle = 'white';
+    c.fillRect(0, 0, DATA_WIDTH, DATA_HEIGHT);
+    const sortedData = data.sort((x, y) => x.x - y.x);
+    const minX = Math.min(...sortedData.map(d => d.x));
+    const maxX = Math.max(...sortedData.map(d => d.x));
+    const xRange = maxX - minX;
+    const realMinY = Math.min(...sortedData.map(d => d.y));
+    const realMaxY = Math.max(...sortedData.map(d => d.y));
+    const realYRange = realMaxY - realMinY;
+    const minY = options?.y?.min ?? (realMinY - 0.15 * realYRange);
+    const maxY = options?.y?.max ?? (realMaxY + 0.075 * realYRange);
+    const yRange = maxY - minY;
+    const toChartX = (x) => Math.round(DATA_WIDTH * (x - minX) / xRange);
+    const toChartY = (y) => Math.round(DATA_HEIGHT - DATA_HEIGHT * (y - minY) / yRange);
+    const stringifyX = options?.x?.stringify ?? ((value) => value.toString());
+    const stringifyY = options?.y?.stringify ?? ((value) => value.toString());
+    // Draw the grid lines
+    const X_SCALE = options?.x?.scale ?? 1;
+    for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
+        c.strokeStyle = 'lightgray';
+        c.lineWidth = 2;
         c.setLineDash([]);
         c.beginPath();
-        for (const { x, y } of sortedData) {
-            c.lineTo(toChartX(x), toChartY(y));
-        }
+        c.moveTo(toChartX(x), 0);
+        c.lineTo(toChartX(x), DATA_HEIGHT);
         c.stroke();
-        // Draw the axis scale labels
-        const SCALE_HEIGHT = Math.round(HEIGHT / 24);
-        for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
-            const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(stringifyX(x), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
-            c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
+    }
+    const Y_SCALE = options?.y?.scale ?? 1;
+    for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
+        c.strokeStyle = 'lightgray';
+        c.lineWidth = 2;
+        c.setLineDash([]);
+        c.beginPath();
+        c.moveTo(0, toChartY(y));
+        c.lineTo(DATA_WIDTH, toChartY(y));
+        c.stroke();
+    }
+    // Draw the data line
+    c.strokeStyle = 'blue';
+    c.lineWidth = 3;
+    c.setLineDash([]);
+    c.beginPath();
+    for (const { x, y } of sortedData) {
+        c.lineTo(toChartX(x), toChartY(y));
+    }
+    c.stroke();
+    // Draw the axis scale labels
+    const SCALE_HEIGHT = Math.round(HEIGHT / 24);
+    for (let x = X_SCALE * Math.round(minX / X_SCALE); x < maxX; x += X_SCALE) {
+        const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(stringifyX(x), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
+        c.drawImage(label, toChartX(x) - label.width / 2, DATA_HEIGHT - label.height);
+    }
+    let maxScaleWidth = 0;
+    for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
+        const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(stringifyY(y), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
+        c.drawImage(label, 0, toChartY(y) - label.height / 2);
+        // Keep track of the widest label on this axis
+        if (label.width > maxScaleWidth) {
+            maxScaleWidth = label.width;
         }
-        let maxScaleWidth = 0;
-        for (let y = Y_SCALE * Math.round(minY / Y_SCALE); y < maxY; y += Y_SCALE) {
-            const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(stringifyY(y), { font: `bold ${SCALE_HEIGHT}px sans-serif`, height: SCALE_HEIGHT, style: 'black' }), 'white');
-            c.drawImage(label, 0, toChartY(y) - label.height / 2);
-            // Keep track of the widest label on this axis
-            if (label.width > maxScaleWidth) {
-                maxScaleWidth = label.width;
-            }
-        }
-        const POINT_LABEL_HEIGHT = Math.round(HEIGHT / 36);
-        // Draw the min point
-        if (options === null || options === void 0 ? void 0 : options.showMin) {
-            let minPoint = undefined;
-            for (const point of data) {
-                const knownMin = (_t = minPoint === null || minPoint === void 0 ? void 0 : minPoint.y) !== null && _t !== void 0 ? _t : Number.MAX_SAFE_INTEGER;
-                if (point.y < knownMin) {
-                    minPoint = point;
-                }
-            }
-            if (minPoint) {
-                const { x, y } = minPoint;
-                // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-                const text = `▼ ${stringifyY(y)}`;
-                const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
-                const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
-                const clampedChartY = Math.min(Math.max(0, toChartY(y) + 4), DATA_HEIGHT - label.height);
-                c.drawImage(label, clampedChartX, clampedChartY);
-            }
-        }
-        // Draw the max point
-        if (options === null || options === void 0 ? void 0 : options.showMax) {
-            let maxPoint = undefined;
-            for (const point of data) {
-                const knownMax = (_u = maxPoint === null || maxPoint === void 0 ? void 0 : maxPoint.y) !== null && _u !== void 0 ? _u : Number.MIN_SAFE_INTEGER;
-                if (point.y > knownMax) {
-                    maxPoint = point;
-                }
-            }
-            if (maxPoint) {
-                const { x, y } = maxPoint;
-                // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
-                const text = `▲ ${stringifyY(y)}`;
-                const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
-                const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
-                const clampedChartY = Math.min(Math.max(0, toChartY(y) - 1.5 * label.height), DATA_HEIGHT - label.height);
-                c.drawImage(label, clampedChartX, clampedChartY);
+    }
+    const POINT_LABEL_HEIGHT = Math.round(HEIGHT / 36);
+    // Draw the min point
+    if (options?.showMin) {
+        let minPoint = undefined;
+        for (const point of data) {
+            const knownMin = minPoint?.y ?? Number.MAX_SAFE_INTEGER;
+            if (point.y < knownMin) {
+                minPoint = point;
             }
         }
-        return (0, util_1.joinCanvasesVertical)([
-            title,
-            (0, util_1.joinCanvasesHorizontal)([
-                rotatedYLabel,
-                (0, util_1.withBorder)(canvas, { thickness: BORDER_WIDTH, style: 'lightgray' })
-            ], { align: 'center' }),
-            xLabel
-        ], { align: 'center' });
-    });
+        if (minPoint) {
+            const { x, y } = minPoint;
+            // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
+            const text = `▼ ${stringifyY(y)}`;
+            const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
+            const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
+            const clampedChartY = Math.min(Math.max(0, toChartY(y) + 4), DATA_HEIGHT - label.height);
+            c.drawImage(label, clampedChartX, clampedChartY);
+        }
+    }
+    // Draw the max point
+    if (options?.showMax) {
+        let maxPoint = undefined;
+        for (const point of data) {
+            const knownMax = maxPoint?.y ?? Number.MIN_SAFE_INTEGER;
+            if (point.y > knownMax) {
+                maxPoint = point;
+            }
+        }
+        if (maxPoint) {
+            const { x, y } = maxPoint;
+            // const text = `(${stringifyX(x)}, ${stringifyY(y)})`;
+            const text = `▲ ${stringifyY(y)}`;
+            const label = (0, util_1.withBackground)((0, text_1.getTextLabel)(text, { font: `bold ${POINT_LABEL_HEIGHT}px sans-serif`, height: POINT_LABEL_HEIGHT, style: 'black' }), 'white');
+            const clampedChartX = Math.min(Math.max(maxScaleWidth, toChartX(x) - label.width / 2), DATA_WIDTH - label.width);
+            const clampedChartY = Math.min(Math.max(0, toChartY(y) - 1.5 * label.height), DATA_HEIGHT - label.height);
+            c.drawImage(label, clampedChartX, clampedChartY);
+        }
+    }
+    return (0, util_1.joinCanvasesVertical)([
+        title,
+        (0, util_1.joinCanvasesHorizontal)([
+            rotatedYLabel,
+            (0, util_1.withBorder)(canvas, { thickness: BORDER_WIDTH, style: 'lightgray' })
+        ], { align: 'center' }),
+        xLabel
+    ], { align: 'center' });
 }
 exports.createLineGraph = createLineGraph;
 function createPieChart(data, options) {
-    var _a, _b;
-    const HEIGHT = (_a = options === null || options === void 0 ? void 0 : options.height) !== null && _a !== void 0 ? _a : 256;
+    const HEIGHT = options?.height ?? 256;
     // Render the title first
     let title;
-    if (options === null || options === void 0 ? void 0 : options.title) {
+    if (options?.title) {
         const px = Math.round(HEIGHT / 6);
         title = (0, text_1.getTextLabel)(options.title, { width: HEIGHT, height: px, font: `${px}px sans-serif`, style: 'white', align: 'center' });
     }
-    const PIE_HEIGHT = HEIGHT - ((_b = title === null || title === void 0 ? void 0 : title.height) !== null && _b !== void 0 ? _b : 0);
+    const PIE_HEIGHT = HEIGHT - (title?.height ?? 0);
     const RADIUS = Math.round(PIE_HEIGHT / 2);
     const canvas = (0, canvas_1.createCanvas)(PIE_HEIGHT, PIE_HEIGHT);
     const c = canvas.getContext('2d');
@@ -403,7 +386,7 @@ function createPieChart(data, options) {
         c.arc(RADIUS, RADIUS, RADIUS - 2, angle, nextAngle);
         c.lineTo(RADIUS, RADIUS);
         c.closePath();
-        c.fillStyle = style !== null && style !== void 0 ? style : `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
+        c.fillStyle = style ?? `rgb(${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)},${Math.floor(Math.random() * 256)})`;
         c.fill();
         c.lineWidth = 2;
         c.strokeStyle = 'white';
@@ -427,7 +410,7 @@ function createPieChart(data, options) {
     return (0, util_1.withDropShadow)((0, util_1.joinCanvasesHorizontal)([
         (0, util_1.joinCanvasesVertical)([
             // TODO: Creating a dummy 1x1 rectangle is not the answer here
-            title !== null && title !== void 0 ? title : (0, util_1.rectangle)(),
+            title ?? (0, util_1.rectangle)(),
             canvas
         ], { align: 'center', spacing: MARGIN }),
         (0, util_1.joinCanvasesVertical)(rows, { align: 'left', spacing: MARGIN })

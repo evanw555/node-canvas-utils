@@ -6,14 +6,13 @@ const text_1 = require("./text");
 const util_1 = require("./util");
 // TODO: Clean up and document
 function createWheelOfFortune(tiles) {
-    var _a, _b;
     const N = tiles.length;
     const R = 300;
     const canvases = [];
     for (let i = 0; i < N; i++) {
         const tile = tiles[i];
-        const tileStyle = (_a = tile.fillStyle) !== null && _a !== void 0 ? _a : 'red';
-        const textStyle = (_b = tile.textStyle) !== null && _b !== void 0 ? _b : 'white';
+        const tileStyle = tile.fillStyle ?? 'red';
+        const textStyle = tile.textStyle ?? 'white';
         const tileImage = createWheelOfFortuneTile(tile.content, { n: N, tileStyle, textStyle, horizontal: tile.horizontal });
         const expanded = (0, canvas_1.createCanvas)(2 * R, 2 * R);
         const c = expanded.getContext('2d');
@@ -26,10 +25,9 @@ function createWheelOfFortune(tiles) {
 exports.createWheelOfFortune = createWheelOfFortune;
 // TODO: Clean up and document
 function createWheelOfFortuneTile(content, options) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const R = (_a = options === null || options === void 0 ? void 0 : options.r) !== null && _a !== void 0 ? _a : 300;
-    const N = (_b = options === null || options === void 0 ? void 0 : options.n) !== null && _b !== void 0 ? _b : 24;
-    const HORIZONTAL = (_c = options === null || options === void 0 ? void 0 : options.horizontal) !== null && _c !== void 0 ? _c : false;
+    const R = options?.r ?? 300;
+    const N = options?.n ?? 24;
+    const HORIZONTAL = options?.horizontal ?? false;
     const theta = 2 * Math.PI / N;
     const phi = (Math.PI - theta) / 2;
     const midphi = (Math.PI / 2) - (theta / 4);
@@ -62,7 +60,7 @@ function createWheelOfFortuneTile(content, options) {
     const ER = R - (lineWidth / 2);
     c.strokeStyle = 'black';
     c.lineWidth = lineWidth;
-    c.fillStyle = (_d = options === null || options === void 0 ? void 0 : options.tileStyle) !== null && _d !== void 0 ? _d : 'red';
+    c.fillStyle = options?.tileStyle ?? 'red';
     c.beginPath();
     // Bottom center
     c.moveTo(WIDTH / 2, HEIGHT);
@@ -81,16 +79,16 @@ function createWheelOfFortuneTile(content, options) {
     // If it's a number, draw as a cent amount
     if (typeof content === 'number') {
         // TODO: Can we always assume cents? Should we add an option for dollars?
-        const cent = (0, text_1.getTextLabel)('¢', { height: unit * 0.6, align: 'center', font: `${unit * 0.6}px "Clarendon LT Std"`, style: (_e = options === null || options === void 0 ? void 0 : options.textStyle) !== null && _e !== void 0 ? _e : 'white' });
+        const cent = (0, text_1.getTextLabel)('¢', { height: unit * 0.6, align: 'center', font: `${unit * 0.6}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
         const fn = HORIZONTAL ? text_1.getTextLabel : text_1.getVerticalTextLabel;
-        const text = fn(content.toString(), { height: unit, align: 'center', font: `${unit * 1.25}px "Clarendon LT Std"`, style: (_f = options === null || options === void 0 ? void 0 : options.textStyle) !== null && _f !== void 0 ? _f : 'white' });
+        const text = fn(content.toString(), { height: unit, align: 'center', font: `${unit * 1.25}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
         const joined = (0, util_1.withDropShadow)((0, util_1.joinCanvasesVertical)([cent, text], { align: 'center' }), { expandCanvas: true, distance: unit / 15 });
         c.drawImage(joined, (WIDTH - joined.width) / 2, 0);
     }
     // If it's a string, write as a label
     if (typeof content === 'string') {
         const fn = HORIZONTAL ? text_1.getTextLabel : text_1.getVerticalTextLabel;
-        const text = fn(content.toString(), { height: unit * 0.9, align: 'center', font: `${unit}px "Clarendon LT Std"`, style: (_g = options === null || options === void 0 ? void 0 : options.textStyle) !== null && _g !== void 0 ? _g : 'white' });
+        const text = fn(content.toString(), { height: unit * 0.9, align: 'center', font: `${unit}px "Clarendon LT Std"`, style: options?.textStyle ?? 'white' });
         const label = (0, util_1.withDropShadow)(text, { expandCanvas: true, distance: unit / 15 });
         c.drawImage(label, (WIDTH - label.width) / 2, unit / 10, label.width, Math.min(label.height, canvas.height * 0.6));
     }

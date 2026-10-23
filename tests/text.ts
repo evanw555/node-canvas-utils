@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { getTextBox, getTextGrid, getTextLabel, getVerticalTextLabel } from '../src/text';
-import { fillBackground, resize } from '../src/util';
-import { Canvas } from 'canvas';
+import { getMarkdownTextLabel, getTextBox, getTextGrid, getTextLabel, getVerticalTextLabel } from '../src/text';
+import { fillBackground, joinCanvasesVertical, loadImage2, resize, withBackground } from '../src/util';
+import { Canvas, loadImage } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
@@ -14,6 +14,24 @@ describe('Text Util tests', () => {
         const textBoxAutoWidth = fillBackground(getTextLabel('Hello, World! Please adjust to the correct width please please', { height: 40 }), { background: 'gray' });
         fs.writeFileSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png', textBoxAutoWidth.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png')).is.true;
+    });
+
+    it('generates markdown text labels', async () => {
+        const final = withBackground(joinCanvasesVertical([
+            await getMarkdownTextLabel('This one should be normal'),
+            await getMarkdownTextLabel('It should be bold **here** and also **right here** but **not here'),
+            await getMarkdownTextLabel('Italic _here_ and _right here_ and **bold here** but _not here'),
+            await getMarkdownTextLabel('It **becomes bold _then also italic_ and back to bold** and finally nothing'),
+            await getMarkdownTextLabel('It\'s ~~striken~~ but ~not here~ and ~~not here'),
+            await getMarkdownTextLabel('It\'s __underlined__ but _not here_ and __not here'),
+            await getMarkdownTextLabel('Testing emojis **👣 and 👑 and 🐦‍⬛** and <sample.png><sample.webp> and ✌🏻3️⃣*️⃣#️⃣🇺🇸', {
+                inlineImages: { 
+                    '<([^<>\\s]+)>': async (match: RegExpMatchArray) => await loadImage2(`assets/${match[1]}`)
+                } 
+            })
+        ]), 'black');
+        fs.writeFileSync('/tmp/node-canvas-utils/getMarkdownTextLabel.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/getMarkdownTextLabel.png')).is.true;
     });
 
     it('generates vertical text labels', () => {

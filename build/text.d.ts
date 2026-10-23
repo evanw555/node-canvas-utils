@@ -1,4 +1,4 @@
-import { Canvas } from "canvas";
+import { Canvas, Image } from "canvas";
 /**
  * Given some text and font, computes how wide the resulting text would be.
  * @param text Text to measure
@@ -29,6 +29,12 @@ export declare function getTextLabel(text: string, options?: {
     alpha?: number;
     margin?: number;
 }): Canvas;
+export declare function getMarkdownTextLabel(text: string, options?: {
+    height?: number;
+    fontFamily?: string;
+    style?: string;
+    inlineImages?: Record<string, (match: RegExpMatchArray) => Promise<Canvas | Image | undefined>>;
+}): Promise<Canvas>;
 /**
  * Generates a canvas containing the specified text displayed vertically (top-to-bottom) with optional parameters.
  * The options are the same as in {@link getTextLabel}, and have the sam effect.

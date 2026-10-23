@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -26,8 +17,7 @@ const axios_1 = __importDefault(require("axios"));
  * @returns The provided image resized as a new canvas (or the original canvas/image if not resized)
  */
 function resize(image, options) {
-    var _a, _b;
-    if ((options === null || options === void 0 ? void 0 : options.width) === undefined && (options === null || options === void 0 ? void 0 : options.height) === undefined) {
+    if (options?.width === undefined && options?.height === undefined) {
         throw new Error('Width and/or height must be specified when resizing');
     }
     if (options.width !== undefined && options.width <= 0) {
@@ -37,8 +27,8 @@ function resize(image, options) {
         throw new Error(`Expected positive height option but got ${options.width}`);
     }
     // We know that if one of these is undefined, the other must be defined
-    const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : ((options === null || options === void 0 ? void 0 : options.height) * image.width / image.height);
-    const HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.height) !== null && _b !== void 0 ? _b : ((options === null || options === void 0 ? void 0 : options.width) * image.height / image.width);
+    const WIDTH = options?.width ?? (options?.height * image.width / image.height);
+    const HEIGHT = options?.height ?? (options?.width * image.height / image.width);
     // Optimization just in case no work needs to be done
     if (WIDTH === image.width && HEIGHT === image.height) {
         return image;
@@ -57,10 +47,9 @@ exports.resize = resize;
  * @param options.maxWidth Maximum width of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
 function joinCanvasesHorizontal(canvases, options) {
-    var _a, _b, _c;
-    const ALIGN = (_a = options === null || options === void 0 ? void 0 : options.align) !== null && _a !== void 0 ? _a : 'top';
-    const SPACING = (_b = options === null || options === void 0 ? void 0 : options.spacing) !== null && _b !== void 0 ? _b : 0;
-    const MAX_WIDTH = (_c = options === null || options === void 0 ? void 0 : options.maxWidth) !== null && _c !== void 0 ? _c : Number.MAX_SAFE_INTEGER;
+    const ALIGN = options?.align ?? 'top';
+    const SPACING = options?.spacing ?? 0;
+    const MAX_WIDTH = options?.maxWidth ?? Number.MAX_SAFE_INTEGER;
     if (!canvases || canvases.length === 0) {
         throw new Error('Cannot join an empty list of canvases');
     }
@@ -76,7 +65,7 @@ function joinCanvasesHorizontal(canvases, options) {
         targetHeight = Math.max(...canvases.map(c => c.height));
     }
     // Resize all canvases as needed
-    const resizedCanvases = canvases.map(c => resize(c, { height: targetHeight !== null && targetHeight !== void 0 ? targetHeight : c.height }));
+    const resizedCanvases = canvases.map(c => resize(c, { height: targetHeight ?? c.height }));
     // Prepare the composite canvas as per the resized canvas dimensions
     const IDEAL_WIDTH = resizedCanvases.map(c => c.width).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
     const WIDTH = Math.min(IDEAL_WIDTH, MAX_WIDTH);
@@ -114,10 +103,9 @@ exports.joinCanvasesHorizontal = joinCanvasesHorizontal;
  * @param options.maxHeight Maximum height of the resulting composite canvas, canvases will overlap to accomodate this (default infinite)
  */
 function joinCanvasesVertical(canvases, options) {
-    var _a, _b, _c;
-    const ALIGN = (_a = options === null || options === void 0 ? void 0 : options.align) !== null && _a !== void 0 ? _a : 'left';
-    const SPACING = (_b = options === null || options === void 0 ? void 0 : options.spacing) !== null && _b !== void 0 ? _b : 0;
-    const MAX_HEIGHT = (_c = options === null || options === void 0 ? void 0 : options.maxHeight) !== null && _c !== void 0 ? _c : Number.MAX_SAFE_INTEGER;
+    const ALIGN = options?.align ?? 'left';
+    const SPACING = options?.spacing ?? 0;
+    const MAX_HEIGHT = options?.maxHeight ?? Number.MAX_SAFE_INTEGER;
     if (!canvases || canvases.length === 0) {
         throw new Error('Cannot join an empty list of canvases');
     }
@@ -133,7 +121,7 @@ function joinCanvasesVertical(canvases, options) {
         targetWidth = Math.max(...canvases.map(c => c.width));
     }
     // Resize all canvases as needed
-    const resizedCanvases = canvases.map(c => resize(c, { width: targetWidth !== null && targetWidth !== void 0 ? targetWidth : c.width }));
+    const resizedCanvases = canvases.map(c => resize(c, { width: targetWidth ?? c.width }));
     // Prepare the composite canvas as per the resized canvas dimensions
     const WIDTH = Math.max(...resizedCanvases.map(c => c.width));
     const IDEAL_HEIGHT = resizedCanvases.map(c => c.height).reduce((a, b) => a + b) + SPACING * (resizedCanvases.length - 1);
@@ -172,20 +160,19 @@ exports.joinCanvasesVertical = joinCanvasesVertical;
  * @returns The source canvases joined as a grid
  */
 function joinCanvasesAsEvenGrid(canvases, options) {
-    var _a, _b;
     if (!canvases || canvases.length === 0) {
         throw new Error('Cannot join an empty list of canvases');
     }
     const n = canvases.length;
     let rows;
     let columns;
-    if ((options === null || options === void 0 ? void 0 : options.rows) === undefined) {
-        columns = (_a = options === null || options === void 0 ? void 0 : options.columns) !== null && _a !== void 0 ? _a : Math.round(Math.sqrt(n));
+    if (options?.rows === undefined) {
+        columns = options?.columns ?? Math.round(Math.sqrt(n));
         rows = Math.ceil(n / columns);
     }
     else {
-        rows = options === null || options === void 0 ? void 0 : options.rows;
-        columns = (_b = options === null || options === void 0 ? void 0 : options.columns) !== null && _b !== void 0 ? _b : Math.ceil(n / rows);
+        rows = options?.rows;
+        columns = options?.columns ?? Math.ceil(n / rows);
     }
     // Validate this math before anything else
     if (n > rows * columns) {
@@ -217,11 +204,10 @@ exports.joinCanvasesAsEvenGrid = joinCanvasesAsEvenGrid;
  * @returns The source canvas with added margin as a new canvas
  */
 function withMargin(canvas, margin) {
-    var _a, _b, _c, _d;
-    const TOP = (typeof margin === 'number') ? margin : ((_a = margin === null || margin === void 0 ? void 0 : margin.top) !== null && _a !== void 0 ? _a : 0);
-    const LEFT = (typeof margin === 'number') ? margin : ((_b = margin === null || margin === void 0 ? void 0 : margin.left) !== null && _b !== void 0 ? _b : 0);
-    const RIGHT = (typeof margin === 'number') ? margin : ((_c = margin === null || margin === void 0 ? void 0 : margin.right) !== null && _c !== void 0 ? _c : 0);
-    const BOTTOM = (typeof margin === 'number') ? margin : ((_d = margin === null || margin === void 0 ? void 0 : margin.bottom) !== null && _d !== void 0 ? _d : 0);
+    const TOP = (typeof margin === 'number') ? margin : (margin?.top ?? 0);
+    const LEFT = (typeof margin === 'number') ? margin : (margin?.left ?? 0);
+    const RIGHT = (typeof margin === 'number') ? margin : (margin?.right ?? 0);
+    const BOTTOM = (typeof margin === 'number') ? margin : (margin?.bottom ?? 0);
     const WIDTH = canvas.width + LEFT + RIGHT;
     const HEIGHT = canvas.height + TOP + BOTTOM;
     // Create the expanded canvas expanded to fit all margins
@@ -277,11 +263,10 @@ exports.withBackground = withBackground;
  * @returns The source image/canvas as a circle
  */
 function toCircle(image, options) {
-    var _a;
     const canvas = (0, canvas_1.createCanvas)(image.width, image.height);
     const context = canvas.getContext('2d');
     // Set the global alpha
-    context.globalAlpha = (_a = options === null || options === void 0 ? void 0 : options.alpha) !== null && _a !== void 0 ? _a : 1;
+    context.globalAlpha = options?.alpha ?? 1;
     // Save the context so we can undo the clipping region at a later time
     context.save();
     // Define the clipping region as an 360 degrees arc at point x and y
@@ -353,14 +338,13 @@ exports.fillWithMask = fillWithMask;
  * @returns New canvas including the source image with an added drop shadow
  */
 function withDropShadow(image, options) {
-    var _a, _b, _c, _d, _e;
     // We can draw a drop shadow by basically drawing an outline with the lowest quality possible
     return withOutline(image, {
-        expandCanvas: (_a = options === null || options === void 0 ? void 0 : options.expandCanvas) !== null && _a !== void 0 ? _a : false,
-        style: (_b = options === null || options === void 0 ? void 0 : options.style) !== null && _b !== void 0 ? _b : `rgba(0,0,0,${(_c = options === null || options === void 0 ? void 0 : options.alpha) !== null && _c !== void 0 ? _c : 0.5})`,
-        thickness: (_d = options === null || options === void 0 ? void 0 : options.distance) !== null && _d !== void 0 ? _d : 3,
+        expandCanvas: options?.expandCanvas ?? false,
+        style: options?.style ?? `rgba(0,0,0,${options?.alpha ?? 0.5})`,
+        thickness: options?.distance ?? 3,
         quality: 1,
-        initialAngle: (_e = options === null || options === void 0 ? void 0 : options.angle) !== null && _e !== void 0 ? _e : (Math.PI * 1.75)
+        initialAngle: options?.angle ?? (Math.PI * 1.75)
     });
 }
 exports.withDropShadow = withDropShadow;
@@ -375,14 +359,13 @@ exports.withDropShadow = withDropShadow;
  * @returns New canvas including the source image with an added outline
  */
 function withOutline(image, options) {
-    var _a, _b, _c, _d, _e;
     // This function essentially applies a drop shadow many times to simulate an outline
-    const expandCanvas = (_a = options === null || options === void 0 ? void 0 : options.expandCanvas) !== null && _a !== void 0 ? _a : false;
-    const style = (_b = options === null || options === void 0 ? void 0 : options.style) !== null && _b !== void 0 ? _b : 'rgba(0,0,0,0.5)';
-    const thickness = (_c = options === null || options === void 0 ? void 0 : options.thickness) !== null && _c !== void 0 ? _c : 3;
+    const expandCanvas = options?.expandCanvas ?? false;
+    const style = options?.style ?? 'rgba(0,0,0,0.5)';
+    const thickness = options?.thickness ?? 3;
     // For the default quality, only raise it by default if the image is large enough
-    const quality = Math.max(1, (_d = options === null || options === void 0 ? void 0 : options.quality) !== null && _d !== void 0 ? _d : (image.width >= 1000 ? 32 : 16));
-    const initialAngle = (_e = options === null || options === void 0 ? void 0 : options.initialAngle) !== null && _e !== void 0 ? _e : 0;
+    const quality = Math.max(1, options?.quality ?? (image.width >= 1000 ? 32 : 16));
+    const initialAngle = options?.initialAngle ?? 0;
     const expansion = expandCanvas ? thickness : 0;
     const width = image.width + 2 * expansion;
     const height = image.height + 2 * expansion;
@@ -412,9 +395,8 @@ function withOutline(image, options) {
 }
 exports.withOutline = withOutline;
 function withBorder(image, options) {
-    var _a, _b;
-    const THICKNESS = (_a = options === null || options === void 0 ? void 0 : options.thickness) !== null && _a !== void 0 ? _a : 3;
-    const STYLE = (_b = options === null || options === void 0 ? void 0 : options.style) !== null && _b !== void 0 ? _b : 'black';
+    const THICKNESS = options?.thickness ?? 3;
+    const STYLE = options?.style ?? 'black';
     const canvas = (0, canvas_1.createCanvas)(image.width + 2 * THICKNESS, image.height + 2 * THICKNESS);
     const c = canvas.getContext('2d');
     c.fillStyle = STYLE;
@@ -431,12 +413,11 @@ exports.withBorder = withBorder;
  * @returns New canvas with all source images superimposed onto one another
  */
 function superimpose(canvases, options) {
-    var _a, _b;
     if (canvases.length === 0) {
         throw new Error('Cannot superimpose an empty list of source images');
     }
-    const HORIZONTAL_ALIGN = (_a = options === null || options === void 0 ? void 0 : options.horizontalAlign) !== null && _a !== void 0 ? _a : 'center';
-    const VERTICAL_ALIGN = (_b = options === null || options === void 0 ? void 0 : options.verticalAlign) !== null && _b !== void 0 ? _b : 'center';
+    const HORIZONTAL_ALIGN = options?.horizontalAlign ?? 'center';
+    const VERTICAL_ALIGN = options?.verticalAlign ?? 'center';
     const WIDTH = Math.max(...canvases.map(c => c.width));
     const HEIGHT = Math.max(...canvases.map(c => c.height));
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
@@ -535,14 +516,13 @@ exports.getRotated = getRotated;
  * @returns New canvas containing the cropped image
  */
 function crop(image, options) {
-    var _a, _b, _c, _d, _e, _f;
-    const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : image.width;
-    const HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.height) !== null && _b !== void 0 ? _b : image.height;
-    const HORIZONTAL = (_c = options === null || options === void 0 ? void 0 : options.horizontal) !== null && _c !== void 0 ? _c : 'center';
-    const VERTICAL = (_d = options === null || options === void 0 ? void 0 : options.vertical) !== null && _d !== void 0 ? _d : 'center';
+    const WIDTH = options?.width ?? image.width;
+    const HEIGHT = options?.height ?? image.height;
+    const HORIZONTAL = options?.horizontal ?? 'center';
+    const VERTICAL = options?.vertical ?? 'center';
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const context = canvas.getContext('2d');
-    let x = -((_e = options === null || options === void 0 ? void 0 : options.x) !== null && _e !== void 0 ? _e : 0);
+    let x = -(options?.x ?? 0);
     switch (HORIZONTAL) {
         case 'left':
             x = 0;
@@ -557,7 +537,7 @@ function crop(image, options) {
             // Let override remain
             break;
     }
-    let y = -((_f = options === null || options === void 0 ? void 0 : options.y) !== null && _f !== void 0 ? _f : 0);
+    let y = -(options?.y ?? 0);
     switch (VERTICAL) {
         case 'top':
             y = 0;
@@ -584,7 +564,6 @@ exports.crop = crop;
  * @returns New canvas containing the source image cropped around the specified points
  */
 function cropAroundPoints(image, points, options) {
-    var _a;
     if (points.length === 0) {
         throw new Error('Cannot crop around no points!');
     }
@@ -592,7 +571,7 @@ function cropAroundPoints(image, points, options) {
     const rightX = Math.max(...points.map(p => p.x));
     const topY = Math.min(...points.map(p => p.y));
     const bottomY = Math.max(...points.map(p => p.y));
-    const margin = (_a = options === null || options === void 0 ? void 0 : options.margin) !== null && _a !== void 0 ? _a : 0;
+    const margin = options?.margin ?? 0;
     return crop(image, {
         x: leftX - margin,
         y: topY - margin,
@@ -636,26 +615,24 @@ exports.isWebpBuffer = isWebpBuffer;
  * @param url Image URL
  * @returns The loaded image
  */
-function loadImage2(url) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let buffer;
-        // If the URL is for a remote resource
-        if (url.startsWith('http')) {
-            const response = yield axios_1.default.get(url, { responseType: 'arraybuffer' });
-            buffer = Buffer.from(new Uint8Array(response.data));
-        }
-        // Otherwise, assume it's local
-        else {
-            buffer = yield (0, promises_1.readFile)(url);
-        }
-        // Check if it has a WEBP file signature
-        if (isWebpBuffer(buffer)) {
-            const converted = fromWebp(buffer);
-            return yield (0, canvas_1.loadImage)(converted.toBuffer());
-        }
-        // Otherwise, just load the image as normal
-        return yield (0, canvas_1.loadImage)(buffer);
-    });
+async function loadImage2(url) {
+    let buffer;
+    // If the URL is for a remote resource
+    if (url.startsWith('http')) {
+        const response = await axios_1.default.get(url, { responseType: 'arraybuffer' });
+        buffer = Buffer.from(new Uint8Array(response.data));
+    }
+    // Otherwise, assume it's local
+    else {
+        buffer = await (0, promises_1.readFile)(url);
+    }
+    // Check if it has a WEBP file signature
+    if (isWebpBuffer(buffer)) {
+        const converted = fromWebp(buffer);
+        return await (0, canvas_1.loadImage)(converted.toBuffer());
+    }
+    // Otherwise, just load the image as normal
+    return await (0, canvas_1.loadImage)(buffer);
 }
 exports.loadImage2 = loadImage2;
 /**
@@ -667,9 +644,8 @@ exports.loadImage2 = loadImage2;
  * @returns New canvas containing the vertically-skewed image
  */
 function skew(image, options) {
-    var _a, _b;
-    const dx = (_a = options === null || options === void 0 ? void 0 : options.dx) !== null && _a !== void 0 ? _a : 0;
-    const dy = (_b = options === null || options === void 0 ? void 0 : options.dy) !== null && _b !== void 0 ? _b : 0;
+    const dx = options?.dx ?? 0;
+    const dy = options?.dy ?? 0;
     const canvas = (0, canvas_1.createCanvas)(image.width + Math.abs(dx), image.height + Math.abs(dy));
     const c = canvas.getContext('2d');
     c.setTransform(1, dy / image.width, dx / image.height, 1, Math.max(0, -dx), Math.max(0, -dy));
@@ -687,11 +663,10 @@ exports.skew = skew;
  * @returns New canvas containing the image skewed along the X axis
  */
 function warpAlongX(image, options) {
-    var _a, _b, _c, _d;
-    const leftY = (_a = options === null || options === void 0 ? void 0 : options.leftY) !== null && _a !== void 0 ? _a : 0;
-    const leftH = (_b = options === null || options === void 0 ? void 0 : options.leftH) !== null && _b !== void 0 ? _b : image.height;
-    const rightY = (_c = options === null || options === void 0 ? void 0 : options.rightY) !== null && _c !== void 0 ? _c : 0;
-    const rightH = (_d = options === null || options === void 0 ? void 0 : options.rightH) !== null && _d !== void 0 ? _d : image.height;
+    const leftY = options?.leftY ?? 0;
+    const leftH = options?.leftH ?? image.height;
+    const rightY = options?.rightY ?? 0;
+    const rightH = options?.rightH ?? image.height;
     // TODO: Canvas should be expanded and possibly shrunk
     const canvas = (0, canvas_1.createCanvas)(image.width, image.height);
     const c = canvas.getContext('2d');
@@ -732,12 +707,11 @@ exports.warpAlongX = warpAlongX;
 //     });
 // }
 function rectangle(options) {
-    var _a, _b;
-    const WIDTH = (_a = options === null || options === void 0 ? void 0 : options.width) !== null && _a !== void 0 ? _a : 1;
-    const HEIGHT = (_b = options === null || options === void 0 ? void 0 : options.height) !== null && _b !== void 0 ? _b : 1;
+    const WIDTH = options?.width ?? 1;
+    const HEIGHT = options?.height ?? 1;
     const canvas = (0, canvas_1.createCanvas)(WIDTH, HEIGHT);
     const c = canvas.getContext('2d');
-    const fillStyle = options === null || options === void 0 ? void 0 : options.fillStyle;
+    const fillStyle = options?.fillStyle;
     if (fillStyle) {
         c.fillStyle = fillStyle;
         c.fillRect(0, 0, WIDTH, HEIGHT);
