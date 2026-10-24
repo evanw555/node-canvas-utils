@@ -174,7 +174,7 @@ export async function getMarkdownTextLabel(text: string, options?: { height?: nu
         }
     }
     processTextBuffer();
-    return joinCanvasesHorizontal(canvases);
+    return joinCanvasesHorizontal(canvases, { align: 'center' });
 }
 
 /**
