@@ -2,7 +2,7 @@ import canvas, { Canvas, Image, createCanvas } from 'canvas';
 import { GraphPalette } from './types';
 import { DEFAULT_GRAPH_PALETTE } from './constants';
 import { getTextBox, getTextLabel } from './text';
-import { crop, fillBackground, rectangle, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline } from './util';
+import { crop, fillBackground, rectangle, getRotated, joinCanvasesAsEvenGrid, joinCanvasesHorizontal, joinCanvasesVertical, resize, superimpose, withBackground, withBorder, withDropShadow, withOutline, withMargin } from './util';
 
 /**
  * Generates a canvas containing a bar graph from the provided data entries in the order provided.
@@ -446,4 +446,127 @@ export function createPieChart(data: { value: number, label: string, style?: str
         ], { align: 'center', spacing: MARGIN }),
         joinCanvasesVertical(rows, { align: 'left', spacing: MARGIN })
     ], { align: 'center', spacing: MARGIN }), { expandCanvas: true });
+}
+
+export function createWordChart(words: { text: string, prevalence?: number }[], options?: { width?: number, height?: number, spacing?: number }): Canvas {
+    const WIDTH = options?.width ?? 600;
+    const HEIGHT = options?.height ?? 400;
+    const SPACING = options?.spacing ?? 1;
+
+    const sortedWords = words.sort((x, y) => (y.prevalence ?? 1) - (x.prevalence ?? 1));
+    const maxPrevalence = Math.max(1, ...words.map(w => w.prevalence ?? 1));
+    const maxWordHeight = Math.round(HEIGHT / 6);
+
+    interface Rectangle {
+        x: number,
+        y: number,
+        width: number,
+        height: number
+    };
+
+    const intersects = (r1: Rectangle, r2: Rectangle): boolean => {
+        return r1.x < r2.x + r2.width
+            && r1.x + r1.width > r2.x
+            && r1.y < r2.y + r2.height
+            && r1.y + r2.height > r2.y;
+    };
+
+    const inBounds = (r: Rectangle): boolean => {
+        return r.x >= 0
+            && r.x + r.width <= WIDTH
+            && r.y >= 0
+            && r.y + r.height <= HEIGHT;
+    };
+
+    const canvas = createCanvas(WIDTH, HEIGHT);
+    const c = canvas.getContext('2d');
+
+    interface Coordinates {
+        x: number,
+        y: number
+    };
+
+    let remainingCoordinates: Coordinates[] = [];
+    for (let x = 0; x < WIDTH; x++) {
+        for (let y = 0; y < HEIGHT; y++) {
+            remainingCoordinates.push({ x, y });
+        }
+    }
+    // Shuffle remaining coordinates
+    remainingCoordinates.sort((x, y) => Math.random() - Math.random());
+
+    // const centerX = Math.round(WIDTH / 2);
+    // const centerY = Math.round(HEIGHT / 2);
+    // // Sort based on distance from center
+    // const d = (c: Coordinates): number => {
+    //     return Math.sqrt(Math.pow(c.x - centerX, 2) + Math.pow(c.y - centerY, 2));
+    // };
+    // remainingCoordinates.sort((a, b) => d(a) - d(b));
+
+    const rectangles: Rectangle[] = [];
+
+    // Go through each word
+    for (const word of sortedWords) {
+        const text = word.text;
+        const prevalance = word.prevalence ?? 1;
+        const relative = prevalance / maxPrevalence;
+
+        let heightMultiplier = 1;
+        while (heightMultiplier > 0.001) {
+            const targetHeight = Math.round(maxWordHeight * Math.pow(relative, 3) * heightMultiplier);
+
+            // TODO: This will actually result in twice the amount of spacing
+            const label = withMargin(getTextLabel(text, { height: targetHeight, style: `rgba(255,255,255,${relative})`, font: `bold ${Math.round(targetHeight * 0.8)}px sans-serif` }), { top: 1, bottom: 1, left: SPACING, right: SPACING });
+
+            // Get the first coordinate that can fit this label
+            const selected = remainingCoordinates.find(c => {
+                const r: Rectangle = {
+                    x: c.x,
+                    y: c.y,
+                    width: label.width,
+                    height: label.height
+                };
+                return inBounds(r) && rectangles.every(r2 => !intersects(r, r2));
+            })
+
+            // If no valid coordinates, abort
+            if (!selected) {
+                heightMultiplier *= 0.9;
+                // console.log(`No coords for ${text}, reducing mult to ${heightMultiplier}`);
+                continue;
+            }
+
+            // Pick one at random
+            // const selected = validCoordinates[Math.floor(Math.random() * validCoordinates.length)];
+
+            // Draw the rectangle
+            c.drawImage(label, selected.x, selected.y);
+
+            // Add to the list of rectangles
+            const r: Rectangle = {
+                x: selected.x,
+                y: selected.y,
+                width: label.width,
+                height: label.height
+            };
+            rectangles.push(r);
+
+            // Narrow down the list of remaining base coordinates
+            remainingCoordinates = remainingCoordinates.filter(c => {
+                const r2: Rectangle = {
+                    x: c.x,
+                    y: c.y,
+                    width: 1,
+                    height: 1
+                };
+                return !intersects(r, r2);
+            });
+
+            // console.log(`Drew "${text}" at height ${label.height}, ${remainingCoordinates.length} remaining coords`);
+
+            break;
+        }
+    }
+
+    return canvas;
 }

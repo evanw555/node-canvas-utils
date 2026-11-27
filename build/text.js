@@ -175,7 +175,7 @@ async function getMarkdownTextLabel(text, options) {
         }
     }
     processTextBuffer();
-    return (0, util_1.joinCanvasesHorizontal)(canvases);
+    return (0, util_1.joinCanvasesHorizontal)(canvases, { align: 'center' });
 }
 exports.getMarkdownTextLabel = getMarkdownTextLabel;
 /**

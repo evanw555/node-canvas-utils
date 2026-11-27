@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { createBarGraph, createLineGraph, createPieChart, renderCalendar } from '../src/graphs';
-import { crop, joinCanvasesAsEvenGrid, joinCanvasesVertical } from '../src/util';
+import { createBarGraph, createLineGraph, createPieChart, renderCalendar, createWordChart } from '../src/graphs';
+import { crop, joinCanvasesAsEvenGrid, joinCanvasesVertical, withBackground } from '../src/util';
 import { Canvas, loadImage } from 'canvas';
 import { GraphPalette } from '../src/types';
 import { getTextLabel } from '../src/text';
@@ -108,5 +108,113 @@ describe('Graph Util tests', () => {
 
         fs.writeFileSync('/tmp/node-canvas-utils/createPieChart.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/createPieChart.png')).is.true;
+    });
+
+    it('can render word charts', async () => {
+        const raw = [
+            "able",
+            "about",
+            "absolute",
+            "accept",
+            "account",
+            "achieve",
+            "across",
+            "act",
+            "active",
+            "actual",
+            "add",
+            "address",
+            "admit",
+            "advertise",
+            "affect",
+            "afford",
+            "after",
+            "afternoon",
+            "again",
+            "against",
+            "age",
+            "agent",
+            "ago",
+            "agree",
+            "air",
+            "all",
+            "allow",
+            "almost",
+            "along",
+            "already",
+            "alright",
+            "also",
+            "although",
+            "always",
+            "america",
+            "amount",
+            "and",
+            "another",
+            "answer",
+            "any",
+            "apart",
+            "apparent",
+            "appear",
+            "apply",
+            "appoint",
+            "approach",
+            "appropriate",
+            "area",
+            "argue",
+            "arm",
+            "around",
+            "arrange",
+            "art",
+            "as",
+            "ask",
+            "associate",
+            "assume",
+            "at",
+            "attend",
+            "authority",
+            "available",
+            "aware",
+            "away",
+            "awful",
+            "baby",
+            "back",
+            "bad",
+            "bag",
+            "balance",
+            "ball",
+            "bank",
+            "bar",
+            "base",
+            "basis",
+            "be",
+            "bear",
+            "beat",
+            "beauty",
+            "because",
+            "become",
+            "bed",
+            "before",
+            "begin",
+            "behind",
+            "believe",
+            "benefit",
+            "best",
+            "bet",
+            "between",
+            "big",
+            "bill",
+            "birth",
+            "bit",
+            "black"
+        ].slice(0, 50);
+
+        const words: { text: string, prevalence: number }[] = raw.map((w, i) => ({ text: w, prevalence: 1.1 - (i / raw.length) }));
+
+        const chart = createWordChart(words, { spacing: 5 });
+
+        const final = withBackground(chart, 'black');
+
+        fs.writeFileSync('/tmp/node-canvas-utils/createWordChart.png', final.toBuffer());
+        expect(fs.existsSync('/tmp/node-canvas-utils/createWordChart.png')).is.true;
     });
 })

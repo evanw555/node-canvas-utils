@@ -65,5 +65,13 @@ export declare function createPieChart(data: {
     height?: number;
     title?: string;
 }): Canvas;
+export declare function createWordChart(words: {
+    text: string;
+    prevalence?: number;
+}[], options?: {
+    width?: number;
+    height?: number;
+    spacing?: number;
+}): Canvas;
 export {};
 //# sourceMappingURL=graphs.d.ts.map
