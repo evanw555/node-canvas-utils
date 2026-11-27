@@ -1,19 +1,34 @@
 import fs from 'fs';
 import { expect } from 'chai';
 import { getMarkdownTextLabel, getTextBox, getTextGrid, getTextLabel, getVerticalTextLabel } from '../src/text';
-import { fillBackground, joinCanvasesVertical, loadImage2, resize, withBackground } from '../src/util';
+import { fillBackground, joinCanvasesVertical, loadImage2, resize, withBackground, withBorder } from '../src/util';
 import { Canvas, loadImage } from 'canvas';
 
 const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt et ante eget dictum. Pellentesque auctor magna purus, et tincidunt risus lobortis eu. Phasellus ut mi odio. Fusce tempor, justo in facilisis cursus, arcu augue tristique turpis, vel mollis libero nisl vel risus. Quisque lectus est, tincidunt non tempus nec, tristique at augue. Donec ut ex rhoncus, fermentum urna nec, consectetur turpis. Donec quis sagittis sem, vel ornare purus. Nulla sed nulla nisl. Sed vehicula sapien suscipit maximus hendrerit. Mauris ut erat quis leo ornare condimentum. Vivamus odio tellus, rutrum nec cursus quis, aliquet nec ligula. Nulla tincidunt cursus tellus, sed porttitor arcu malesuada sit amet. Integer non justo dapibus, suscipit quam eget, vulputate leo. In accumsan rhoncus eros, a euismod odio condimentum eget. Phasellus erat eros, eleifend sit amet quam ac, facilisis faucibus odio.';
 
 describe('Text Util tests', () => {
     it('generates text labels', () => {
-        const textBox = fillBackground(getTextLabel('Hello, World!', { width: 256, height: 40 }), { background: 'gray' });
-        fs.writeFileSync('/tmp/node-canvas-utils/getTextLabel.png', textBox.toBuffer());
+        const joined = joinCanvasesVertical([
+            withBorder(getTextLabel('Hello, World!', { width: 256, height: 40 })),
+            withBorder(getTextLabel('Hello, left!', { width: 256, height: 40, align: 'left' })),
+            withBorder(getTextLabel('Hello, right!', { width: 256, height: 40, align: 'right' })),
+            withBorder(getTextLabel('Hello, World! Please adjust to the correct width please please', { height: 40 })),
+            withBorder(getTextLabel('Use auto-underline', { width: 1000, height: 50, underline: true })),
+            withBorder(getTextLabel('Use auto-strikethrough', { width: 1000, height: 50, strikethrough: true })),
+            withBorder(getTextLabel('Use overridden underline/strikethrough thickness', { width: 1000, height: 50, underline: 10, strikethrough: 5 })),
+            withBorder(getTextLabel('Font is 60% of height', { height: 50, font: 'bold 30px sans-serif' })),
+            withBorder(getTextLabel('Font is 70% of height', { height: 50, font: 'bold 35px sans-serif' })),
+            withBorder(getTextLabel('Font is 80% of height', { height: 50, font: 'bold 40px sans-serif' })),
+            withBorder(getTextLabel('Font is 90% of height', { height: 50, font: 'bold 45px sans-serif' })),
+            withBorder(getTextLabel('Font is 90% of height (fit descent)', { height: 50, font: 'bold 45px sans-serif', fitDescent: true })),
+            withBorder(getTextLabel('Font is 100% of height', { height: 50, font: 'bold 50px sans-serif' })),
+            withBorder(getTextLabel('Font is 100% of height (fit descent)', { height: 50, font: 'bold 50px sans-serif', fitDescent: true })),
+            withBorder(getTextLabel('Font is 110% of height', { height: 50, font: 'bold 55px sans-serif' })),
+            withBorder(getTextLabel('ago', { height: 50, font: 'bold 50px sans-serif' }))
+        ]);
+        const final = withBackground(joined, 'gray');
+        fs.writeFileSync('/tmp/node-canvas-utils/getTextLabel.png', final.toBuffer());
         expect(fs.existsSync('/tmp/node-canvas-utils/getTextLabel.png')).is.true;
-        const textBoxAutoWidth = fillBackground(getTextLabel('Hello, World! Please adjust to the correct width please please', { height: 40 }), { background: 'gray' });
-        fs.writeFileSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png', textBoxAutoWidth.toBuffer());
-        expect(fs.existsSync('/tmp/node-canvas-utils/getTextLabelAutoWidth.png')).is.true;
     });
 
     it('generates markdown text labels', async () => {

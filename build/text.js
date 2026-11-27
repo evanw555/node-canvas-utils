@@ -30,9 +30,12 @@ exports.getTextWidth = getTextWidth;
  * @param options.height Desired height of the resulting label image (defaults to 20px)
  * @param options.align How to align the text horizontally (defaults to center-aligned)
  * @param options.font Font to for the text (defaults to an auto-sized sans-serif)
+ * @param options.underline Optional text underline thickness, or true to use auto thickness (defaults to none)
+ * @param options.strikethrough Optional text strikethrough thickness, or true ot use auto thickness (defaults to none)
  * @param options.style Style to use for the text (defaults to white)
  * @param options.alpha Alpha to use for the text (defaults to opaque)
  * @param options.margin Optional horizontal margin (defaults to none)
+ * @param options.fitDescent If true, vertically center the text using the ascent AND the descent to make room for desent-heavy letters (e.g. "g"). Otherwise, center only on the ascent and let descents possibly clip.
  * @returns New canvas containing the specified text
  */
 function getTextLabel(text, options) {
@@ -40,6 +43,7 @@ function getTextLabel(text, options) {
     const FONT = options?.font ?? `${HEIGHT * 0.6}px sans-serif`;
     const WIDTH = options?.width ?? getTextWidth(text, FONT);
     const ALIGN = options?.align ?? 'center';
+    const FIT_DESCENT = options?.fitDescent ?? false;
     if (!text) {
         throw new Error('Cannot create a text label with no text');
     }
@@ -48,26 +52,49 @@ function getTextLabel(text, options) {
     context.font = FONT;
     context.fillStyle = options?.style ?? 'white';
     context.globalAlpha = options?.alpha ?? 1;
-    const ascent = context.measureText(text).actualBoundingBoxAscent;
-    const verticalMargin = (HEIGHT - ascent) / 2;
+    // TODO: We can use emHeightAscent and emHeightDescent to make every text label consistent, but I haven't figured out why it pushes them out of bounds
+    // const measurements = context.measureText(text) as unknown as { width: number, emHeightAscent: number, emHeightDescent: number };
+    const measurements = context.measureText(text);
+    // const ascent = measurements.emHeightAscent;
+    // const descent = measurements.emHeightDescent;
+    const ascent = measurements.actualBoundingBoxAscent;
+    const descent = measurements.actualBoundingBoxDescent;
+    const verticalMargin = (HEIGHT - ascent - (FIT_DESCENT ? descent : 0)) / 2;
+    let textX;
+    let maxWidth = undefined;
     if (ALIGN === 'center') {
-        const textWidth = context.measureText(text).width;
+        const textWidth = measurements.width;
         const margin = options?.margin ?? 0;
         const usableWidth = WIDTH - (2 * margin);
         if (textWidth > usableWidth) {
             // If the text is too wide for the label, compress it
-            context.fillText(text, Math.floor(margin), verticalMargin + ascent, usableWidth);
+            textX = Math.floor(margin);
+            maxWidth = usableWidth;
         }
         else {
             // If the text is smaller than the label, center it
-            context.fillText(text, Math.floor(margin + (usableWidth - textWidth) / 2), verticalMargin + ascent);
+            textX = Math.floor(margin + (usableWidth - textWidth) / 2);
         }
     }
     else if (ALIGN === 'right') {
-        context.fillText(text, Math.floor(WIDTH - context.measureText(text).width), verticalMargin + ascent, WIDTH);
+        textX = Math.floor(WIDTH - measurements.width);
+        maxWidth = WIDTH;
     }
     else {
-        context.fillText(text, 0, verticalMargin + ascent, WIDTH);
+        textX = 0;
+        maxWidth = WIDTH;
+    }
+    // Draw the text at the calculated position
+    context.fillText(text, textX, verticalMargin + ascent, maxWidth);
+    // Draw optional underline
+    if (options?.underline) {
+        const underlineWidth = (options.underline === true) ? Math.round(HEIGHT / 18) : Math.max(1, Math.round(options.underline));
+        context.fillRect(textX, verticalMargin + ascent + underlineWidth, measurements.width, underlineWidth);
+    }
+    // Draw optional strikethrough
+    if (options?.strikethrough) {
+        const strikethroughWidth = (options.strikethrough === true) ? Math.round(HEIGHT / 16) : Math.max(1, Math.round(options.strikethrough));
+        context.fillRect(textX, verticalMargin + Math.round(ascent / 2), measurements.width, strikethroughWidth);
     }
     context.restore();
     return canvas;
@@ -79,14 +106,20 @@ async function getMarkdownTextLabel(text, options) {
     const canvases = [];
     let bold = false;
     let italic = false;
-    // TODO: Support this somewhow
     let underline = false;
     let strikethrough = false;
     let i = 0;
     let textBuffer = '';
     const renderTextBuffer = () => {
         const font = (bold ? 'bold ' : '') + (italic ? 'italic ' : '') + (strikethrough ? 'strikethrough ' : '') + `${Math.round(0.85 * HEIGHT)}px` + (options?.fontFamily ?? 'sans-serif');
-        const label = getTextLabel(textBuffer, { height: options?.height, style: options?.style, font });
+        const label = getTextLabel(textBuffer, {
+            height: options?.height,
+            style: options?.style,
+            font,
+            underline: underline ? true : undefined,
+            strikethrough: strikethrough ? true : undefined,
+            fitDescent: true
+        });
         return label;
     };
     const processTextBuffer = () => {
@@ -153,7 +186,6 @@ async function getMarkdownTextLabel(text, options) {
             i += 2;
         }
         else if (text.substring(i, i + 2) === '__' && (strikethrough || text.includes('__', i + 2))) {
-            // TODO: This doesn't actually work, will need to manually underline it
             processTextBuffer();
             underline = !underline;
             i += 2;
@@ -164,7 +196,6 @@ async function getMarkdownTextLabel(text, options) {
             i++;
         }
         else if (text.substring(i, i + 2) === '~~' && (strikethrough || text.includes('~~', i + 2))) {
-            // TODO: This doesn't actually work, will need to manually strike it out
             processTextBuffer();
             strikethrough = !strikethrough;
             i += 2;

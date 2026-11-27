@@ -6,6 +6,18 @@ import { Canvas, Image } from "canvas";
  * @returns The width in pixels
  */
 export declare function getTextWidth(text: string, font: string): number;
+interface TextLabelOptions {
+    width?: number;
+    height?: number;
+    align?: 'center' | 'left' | 'right';
+    font?: string;
+    underline?: true | number;
+    strikethrough?: true | number;
+    style?: string;
+    alpha?: number;
+    margin?: number;
+    fitDescent?: boolean;
+}
 /**
  * Generates a canvas containing the specified text with optional parameters specifying the width, height, alignment, color, etc.
  * The width of the label will be just big enough to contain the text, but it can be overridden if a specific size is desired.
@@ -15,20 +27,15 @@ export declare function getTextWidth(text: string, font: string): number;
  * @param options.height Desired height of the resulting label image (defaults to 20px)
  * @param options.align How to align the text horizontally (defaults to center-aligned)
  * @param options.font Font to for the text (defaults to an auto-sized sans-serif)
+ * @param options.underline Optional text underline thickness, or true to use auto thickness (defaults to none)
+ * @param options.strikethrough Optional text strikethrough thickness, or true ot use auto thickness (defaults to none)
  * @param options.style Style to use for the text (defaults to white)
  * @param options.alpha Alpha to use for the text (defaults to opaque)
  * @param options.margin Optional horizontal margin (defaults to none)
+ * @param options.fitDescent If true, vertically center the text using the ascent AND the descent to make room for desent-heavy letters (e.g. "g"). Otherwise, center only on the ascent and let descents possibly clip.
  * @returns New canvas containing the specified text
  */
-export declare function getTextLabel(text: string, options?: {
-    width?: number;
-    height?: number;
-    align?: 'center' | 'left' | 'right';
-    font?: string;
-    style?: string;
-    alpha?: number;
-    margin?: number;
-}): Canvas;
+export declare function getTextLabel(text: string, options?: TextLabelOptions): Canvas;
 export declare function getMarkdownTextLabel(text: string, options?: {
     height?: number;
     fontFamily?: string;
@@ -85,4 +92,5 @@ export declare function getTextGrid(cells: {
     rowHeight?: number;
     spacing?: number;
 }): Canvas;
+export {};
 //# sourceMappingURL=text.d.ts.map

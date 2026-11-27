@@ -470,7 +470,7 @@ function createWordChart(words, options) {
             const POWER = 1;
             const targetHeight = Math.round(maxWordHeight * Math.pow(relative, POWER) * heightMultiplier);
             // TODO: This will actually result in twice the amount of spacing
-            const label = (0, util_1.withMargin)((0, text_1.getTextLabel)(text, { height: targetHeight, style: `rgba(255,255,255,${relative})`, font: `bold ${Math.round(targetHeight * 0.8)}px sans-serif` }), { top: 1, bottom: 1, left: SPACING, right: SPACING });
+            const label = (0, util_1.withMargin)((0, text_1.getTextLabel)(text, { height: targetHeight, style: `rgba(255,255,255,${0.25 + (0.75 * relative)})`, font: `bold ${targetHeight}px sans-serif`, fitDescent: true }), { top: 1, bottom: 1, left: SPACING, right: SPACING });
             // Get the first coordinate that can fit this label
             const selected = remainingCoordinates.find(c => {
                 const r = {

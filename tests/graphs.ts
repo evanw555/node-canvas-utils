@@ -208,7 +208,7 @@ describe('Graph Util tests', () => {
             "black"
         ].slice(0, 50);
 
-        const words: { text: string, prevalence: number }[] = raw.map((w, i) => ({ text: w, prevalence: 1.1 - (i / raw.length) }));
+        const words: { text: string, prevalence: number }[] = raw.map((w, i) => ({ text: w, prevalence: Math.pow(50 - i, 2) }));
 
         const chart = createWordChart(words, { spacing: 5 });
 
