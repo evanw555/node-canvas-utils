@@ -429,7 +429,7 @@ function createWordChart(words, options) {
         return r1.x < r2.x + r2.width
             && r1.x + r1.width > r2.x
             && r1.y < r2.y + r2.height
-            && r1.y + r2.height > r2.y;
+            && r1.y + r1.height > r2.y;
     };
     const inBounds = (r) => {
         return r.x >= 0
@@ -462,8 +462,10 @@ function createWordChart(words, options) {
         const prevalance = word.prevalence ?? 1;
         const relative = prevalance / maxPrevalence;
         let heightMultiplier = 1;
-        while (heightMultiplier > 0.001) {
-            const targetHeight = Math.round(maxWordHeight * Math.pow(relative, 3) * heightMultiplier);
+        while (heightMultiplier > 0.005) {
+            // TODO: If the power is 2 or 3, less prevalent words may be too small
+            const POWER = 1;
+            const targetHeight = Math.round(maxWordHeight * Math.pow(relative, POWER) * heightMultiplier);
             // TODO: This will actually result in twice the amount of spacing
             const label = (0, util_1.withMargin)((0, text_1.getTextLabel)(text, { height: targetHeight, style: `rgba(255,255,255,${relative})`, font: `bold ${Math.round(targetHeight * 0.8)}px sans-serif` }), { top: 1, bottom: 1, left: SPACING, right: SPACING });
             // Get the first coordinate that can fit this label
