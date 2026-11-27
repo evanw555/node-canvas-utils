@@ -421,8 +421,11 @@ function createWordChart(words, options) {
     const WIDTH = options?.width ?? 600;
     const HEIGHT = options?.height ?? 400;
     const SPACING = options?.spacing ?? 1;
-    const sortedWords = words.sort((x, y) => (y.prevalence ?? 1) - (x.prevalence ?? 1));
-    const maxPrevalence = Math.max(1, ...words.map(w => w.prevalence ?? 1));
+    if (words.length === 0) {
+        throw new Error('Cannot make a word chart with no words');
+    }
+    const sortedWords = words.sort((x, y) => y.prevalence - x.prevalence);
+    const maxPrevalence = Math.max(...words.map(w => w.prevalence));
     const maxWordHeight = Math.round(HEIGHT / 6);
     ;
     const intersects = (r1, r2) => {
@@ -459,7 +462,7 @@ function createWordChart(words, options) {
     // Go through each word
     for (const word of sortedWords) {
         const text = word.text;
-        const prevalance = word.prevalence ?? 1;
+        const prevalance = word.prevalence;
         const relative = prevalance / maxPrevalence;
         let heightMultiplier = 1;
         while (heightMultiplier > 0.005) {

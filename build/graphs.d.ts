@@ -67,7 +67,7 @@ export declare function createPieChart(data: {
 }): Canvas;
 export declare function createWordChart(words: {
     text: string;
-    prevalence?: number;
+    prevalence: number;
 }[], options?: {
     width?: number;
     height?: number;
